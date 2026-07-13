@@ -16,6 +16,7 @@
   <span class="nav-name" id="nav-nome">Seu nome</span>
   <div class="nav-links">
     <a href="#sobre">Sobre</a>
+    <a href="#galeria">Galeria</a>
     <a href="#estante">Estante</a>
     <a href="#publicacoes">Publicações</a>
     <a href="#agora">Agora</a>
@@ -28,6 +29,21 @@
   <p class="sub" id="hero-bio">Escreva aqui sua bio em config.js.</p>
   <div class="stats" id="stats"></div>
 </header>
+
+<section id="sobre-mim">
+  <div class="section-head">
+    <h2>Sobre mim</h2>
+  </div>
+  <div class="sobre-texto" id="sobre-texto"></div>
+</section>
+
+<section id="galeria">
+  <div class="section-head">
+    <h2>Galeria</h2>
+    <p>Alguns momentos.</p>
+  </div>
+  <div class="galeria-grid" id="galeria-grid"></div>
+</section>
 
 <section id="estante">
   <div class="section-head">
@@ -74,12 +90,19 @@
 </section>
 
 <footer>
-  Feito com Claude · edite <code>config.js</code>, <code>books-data.js</code> e <code>publicacoes-data.js</code> pra personalizar
+  Feito com Claude · edite <code>config.js</code>, <code>books-data.js</code>, <code>publicacoes-data.js</code> e <code>galeria-data.js</code> pra personalizar
 </footer>
+
+<div class="lightbox" id="lightbox">
+  <span class="lightbox-close" id="lightbox-close">Fechar ✕</span>
+  <img id="lightbox-img" src="" alt="">
+  <p id="lightbox-legenda"></p>
+</div>
 
 <script src="config.js"></script>
 <script src="books-data.js"></script>
 <script src="publicacoes-data.js"></script>
+<script src="galeria-data.js"></script>
 <script src="site.js"></script>
 
 </body>

@@ -4,6 +4,39 @@ function renderSobre(){
   document.getElementById('hero-nome').textContent = CONFIG.nome;
   document.getElementById('hero-bio').textContent = CONFIG.bio;
   document.getElementById('nav-nome').textContent = CONFIG.nome;
+
+  const texto = document.getElementById('sobre-texto');
+  texto.innerHTML = (CONFIG.sobreMim || []).map(p => `<p>${p}</p>`).join('');
+}
+
+// ---------- Galeria ----------
+function renderGaleria(){
+  const grid = document.getElementById('galeria-grid');
+  if(!GALERIA || !GALERIA.length){
+    grid.innerHTML = '<p class="galeria-empty">Nenhuma foto ainda — adicione em galeria-data.js</p>';
+    return;
+  }
+  grid.innerHTML = GALERIA.map((f, i) => `
+    <div class="galeria-item" data-index="${i}">
+      <img src="${f.arquivo}" alt="${f.legenda}" loading="lazy" onerror="this.parentElement.style.display='none'">
+    </div>
+  `).join('');
+
+  grid.querySelectorAll('.galeria-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const foto = GALERIA[item.dataset.index];
+      document.getElementById('lightbox-img').src = foto.arquivo;
+      document.getElementById('lightbox-img').alt = foto.legenda;
+      document.getElementById('lightbox-legenda').textContent = foto.legenda;
+      document.getElementById('lightbox').classList.add('open');
+    });
+  });
+
+  const closeLightbox = () => document.getElementById('lightbox').classList.remove('open');
+  document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
+  document.getElementById('lightbox').addEventListener('click', (e) => {
+    if(e.target.id === 'lightbox') closeLightbox();
+  });
 }
 
 // ---------- Estante (livros) ----------
@@ -167,6 +200,7 @@ async function renderYoutube(){
 // ---------- init ----------
 document.addEventListener('DOMContentLoaded', () => {
   renderSobre();
+  renderGaleria();
   renderStats();
   renderShelf();
   renderCatalog('todos');
