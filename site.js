@@ -71,6 +71,35 @@ function renderStats(){
   `;
 }
 
+// ---------- Capas automáticas (livros sem ISBN) ----------
+async function buscarCapasFaltantes(){
+  const semCapa = BOOKS.filter(b => !b.isbn);
+  await Promise.all(semCapa.map(async (b) => {
+    try{
+      const q = encodeURIComponent(`${b.titulo} ${b.autor}`);
+      const res = await fetch(`https://openlibrary.org/search.json?q=${q}&limit=1&fields=cover_i,isbn`);
+      if(!res.ok) return;
+      const data = await res.json();
+      const doc = data.docs && data.docs[0];
+      if(doc && doc.cover_i){
+        b._coverUrl = `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg`;
+      } else if(doc && doc.isbn && doc.isbn.length){
+        b._coverUrl = `https://covers.openlibrary.org/b/isbn/${doc.isbn[0]}-M.jpg`;
+      }
+    }catch(e){ /* sem capa, fica o fallback com a inicial */ }
+  }));
+}
+
+function coverUrl(b){
+  if(b.isbn) return `https://covers.openlibrary.org/b/isbn/${b.isbn}-M.jpg`;
+  if(b._coverUrl) return b._coverUrl;
+  return null;
+}
+
+function bookId(b){
+  return 'livro-' + b.titulo.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+}
+
 // ---------- Idioma → cor (hash determinístico) ----------
 const LANG_PALETTE_SIZE = 8;
 function langColorIndex(tag){
@@ -91,10 +120,12 @@ function renderShelf(){
   const shelf = document.getElementById('shelf');
   shelf.innerHTML = BOOKS.map(b => {
     const height = Math.min(230, Math.max(115, 90 + (b.paginas || 100) / 6));
+    const cover = coverUrl(b);
     return `
-      <div class="spine ${langClass(b)} ${b.status === 'lendo' ? 'is-lendo' : ''}" style="height:${height}px" tabindex="0" role="button" aria-label="${b.titulo}, de ${b.autor}">
+      <div class="spine ${langClass(b)} ${b.status === 'lendo' ? 'is-lendo' : ''}" style="height:${height}px" tabindex="0" role="button" data-target="${bookId(b)}" aria-label="${b.titulo}, de ${b.autor}">
         <span>${b.titulo}</span>
         <div class="spine-tooltip">
+          ${cover ? `<img class="tt-cover" src="${cover}" alt="" loading="lazy">` : ''}
           <strong>${b.titulo}</strong>
           <em>${b.autor} · ${statusLabel[b.status]}</em>
           ${b.tags.length ? `<em>${b.tags.join(', ')}</em>` : ''}
@@ -103,6 +134,22 @@ function renderShelf(){
       </div>
     `;
   }).join('');
+
+  shelf.querySelectorAll('.spine').forEach(spine => {
+    spine.addEventListener('click', () => {
+      document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelector('.filter-btn[data-filter="todos"]').classList.add('active');
+      renderCatalog('todos');
+      requestAnimationFrame(() => {
+        const alvo = document.getElementById(spine.dataset.target);
+        if(alvo){
+          alvo.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          alvo.classList.add('card-highlight');
+          setTimeout(() => alvo.classList.remove('card-highlight'), 1600);
+        }
+      });
+    });
+  });
 
   const legend = document.getElementById('shelf-legend');
   if(legend){
@@ -158,11 +205,12 @@ function renderCatalogAgrupado(list, catalog){
 }
 
 function cardHTML(b, i){
+  const cover = coverUrl(b);
   return `
-    <article class="card ${b.status === 'lendo' ? 'card-lendo' : ''}" style="animation-delay:${i * 0.03}s">
+    <article class="card ${b.status === 'lendo' ? 'card-lendo' : ''}" id="${bookId(b)}" style="animation-delay:${i * 0.03}s">
       <div class="card-body">
-        ${b.isbn
-          ? `<img class="cover" loading="lazy" src="https://covers.openlibrary.org/b/isbn/${b.isbn}-M.jpg" alt="Capa de ${b.titulo}" onerror="this.outerHTML='<div class=&quot;cover-fallback&quot;>${b.titulo.charAt(0)}</div>'">`
+        ${cover
+          ? `<img class="cover" loading="lazy" src="${cover}" alt="Capa de ${b.titulo}" onerror="this.outerHTML='<div class=&quot;cover-fallback&quot;>${b.titulo.charAt(0)}</div>'">`
           : `<div class="cover-fallback">${b.titulo.charAt(0)}</div>`
         }
         <div class="card-info">
@@ -264,15 +312,17 @@ async function renderYoutube(){
 }
 
 // ---------- init ----------
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   renderSobre();
   renderGaleria();
-  renderStats();
-  renderShelf();
-  renderCatalog('todos');
   renderPublicacoes();
   renderLastfm();
   renderYoutube();
+
+  await buscarCapasFaltantes();
+  renderStats();
+  renderShelf();
+  renderCatalog('todos');
 
   document.getElementById('filters').addEventListener('click', (e) => {
     if(!e.target.classList.contains('filter-btn')) return;
