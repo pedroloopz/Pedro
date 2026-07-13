@@ -92,7 +92,7 @@ function renderShelf(){
   shelf.innerHTML = BOOKS.map(b => {
     const height = Math.min(230, Math.max(115, 90 + (b.paginas || 100) / 6));
     return `
-      <div class="spine ${langClass(b)}" style="height:${height}px" tabindex="0" role="button" aria-label="${b.titulo}, de ${b.autor}">
+      <div class="spine ${langClass(b)} ${b.status === 'lendo' ? 'is-lendo' : ''}" style="height:${height}px" tabindex="0" role="button" aria-label="${b.titulo}, de ${b.autor}">
         <span>${b.titulo}</span>
         <div class="spine-tooltip">
           <strong>${b.titulo}</strong>
@@ -119,8 +119,47 @@ function renderCatalog(filter){
   const list = filter === 'todos' ? BOOKS : BOOKS.filter(b => b.status === filter);
   document.getElementById('count').textContent = `${list.length} título${list.length === 1 ? '' : 's'}`;
 
-  catalog.innerHTML = list.map((b, i) => `
-    <article class="card" style="animation-delay:${i * 0.03}s">
+  if(!list.length){
+    catalog.innerHTML = `<p class="catalog-empty">Nenhum livro nessa categoria ainda.</p>`;
+    return;
+  }
+
+  if(filter === 'todos'){
+    renderCatalogAgrupado(list, catalog);
+    return;
+  }
+
+  catalog.innerHTML = `<div class="grupo-grid">${list.map((b, i) => cardHTML(b, i)).join('')}</div>`;
+}
+
+function renderCatalogAgrupado(list, catalog){
+  const grupos = {};
+  list.forEach(b => {
+    const lang = (b.tags || [])[0] || 'Sem idioma definido';
+    if(!grupos[lang]) grupos[lang] = [];
+    grupos[lang].push(b);
+  });
+
+  const idiomasOrdenados = Object.keys(grupos).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
+  catalog.innerHTML = idiomasOrdenados.map(lang => {
+    const livros = grupos[lang].slice().sort((a, b) => a.titulo.localeCompare(b.titulo, 'pt-BR'));
+    const idx = langColorIndex(lang === 'Sem idioma definido' ? null : lang);
+    const swatchClass = idx === null ? 'idioma-default' : `idioma-${idx}`;
+    return `
+      <div class="catalog-grupo">
+        <div class="grupo-titulo"><span class="legend-swatch ${swatchClass}"></span>${lang}</div>
+        <div class="grupo-grid">
+          ${livros.map((b, i) => cardHTML(b, i)).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function cardHTML(b, i){
+  return `
+    <article class="card ${b.status === 'lendo' ? 'card-lendo' : ''}" style="animation-delay:${i * 0.03}s">
       <div class="card-body">
         ${b.isbn
           ? `<img class="cover" loading="lazy" src="https://covers.openlibrary.org/b/isbn/${b.isbn}-M.jpg" alt="Capa de ${b.titulo}" onerror="this.outerHTML='<div class=&quot;cover-fallback&quot;>${b.titulo.charAt(0)}</div>'">`
@@ -140,11 +179,11 @@ function renderCatalog(filter){
       </div>
       <p class="resenha ${b.resenha ? '' : 'empty'}">${b.resenha || 'Sem anotação ainda.'}</p>
       <div class="card-meta">
-        <span>${b.paginas ? b.paginas + ' pág.' : '—'}</span>
+        <span>${b.editora ? b.editora : (b.paginas ? b.paginas + ' pág.' : '—')}</span>
         <span>${formatDate(b.dataLeitura)}</span>
       </div>
     </article>
-  `).join('');
+  `;
 }
 
 // ---------- Publicações ----------
