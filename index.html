@@ -31,61 +31,81 @@
 </header>
 
 <section id="sobre-mim">
-  <div class="section-head">
-    <h2>Sobre mim</h2>
+  <div class="section-wrap">
+    <div class="section-head">
+      <span class="section-num">I.</span>
+      <h2>Sobre mim</h2>
+    </div>
+    <div class="sobre-texto" id="sobre-texto"></div>
   </div>
-  <div class="sobre-texto" id="sobre-texto"></div>
 </section>
+<div class="divider"></div>
 
 <section id="galeria">
-  <div class="section-head">
-    <h2>Galeria</h2>
-    <p>Alguns momentos.</p>
+  <div class="section-wrap">
+    <div class="section-head">
+      <span class="section-num">II.</span>
+      <h2>Galeria</h2>
+      <p>Alguns momentos.</p>
+    </div>
+    <div class="galeria-grid" id="galeria-grid"></div>
   </div>
-  <div class="galeria-grid" id="galeria-grid"></div>
 </section>
+<div class="divider"></div>
 
 <section id="estante">
-  <div class="section-head">
-    <h2>Estante</h2>
-    <p>Os livros que passaram por mim — lidos, em andamento e na fila.</p>
-  </div>
-
-  <div class="shelf-section">
-    <p class="shelf-label">Passe o mouse sobre uma lombada</p>
-    <div class="shelf-wrap">
-      <div class="shelf" id="shelf"></div>
-      <div class="shelf-board"></div>
+  <div class="section-wrap">
+    <div class="section-head">
+      <span class="section-num">III.</span>
+      <h2>Estante</h2>
+      <p>Os livros que passaram por mim — lidos, em andamento e na fila. Cor da lombada indica o idioma.</p>
     </div>
-  </div>
 
-  <div class="filters" id="filters">
-    <button class="filter-btn active" data-filter="todos">Todos</button>
-    <button class="filter-btn" data-filter="lido">Lidos</button>
-    <button class="filter-btn" data-filter="lendo">Lendo</button>
-    <button class="filter-btn" data-filter="quero-ler">Quero ler</button>
-    <span class="count-tag" id="count"></span>
-  </div>
+    <div class="shelf-section">
+      <p class="shelf-label">Passe o mouse sobre uma lombada</p>
+      <div class="legend" id="shelf-legend"></div>
+      <div class="shelf-wrap">
+        <div class="shelf" id="shelf"></div>
+        <div class="shelf-board"></div>
+      </div>
+    </div>
 
-  <main class="catalog" id="catalog"></main>
+    <div class="filters" id="filters">
+      <button class="filter-btn active" data-filter="todos">Todos</button>
+      <button class="filter-btn" data-filter="lido">Lidos</button>
+      <button class="filter-btn" data-filter="lendo">Lendo</button>
+      <button class="filter-btn" data-filter="quero-ler">Quero ler</button>
+      <span class="count-tag" id="count"></span>
+    </div>
+
+    <main class="catalog" id="catalog"></main>
+  </div>
 </section>
+<div class="divider"></div>
 
 <section id="publicacoes">
-  <div class="section-head">
-    <h2>Publicações</h2>
-    <p>Artigos, TCC e outros textos.</p>
+  <div class="section-wrap">
+    <div class="section-head">
+      <span class="section-num">IV.</span>
+      <h2>Publicações</h2>
+      <p>Artigos, TCC e outros textos.</p>
+    </div>
+    <div class="catalog" id="publicacoes-grid"></div>
   </div>
-  <div class="catalog" id="publicacoes-grid"></div>
 </section>
+<div class="divider"></div>
 
 <section id="agora">
-  <div class="section-head">
-    <h2>Agora</h2>
-    <p>O que estou ouvindo, jogando e publicando, em tempo real.</p>
-  </div>
-  <div class="agora-grid">
-    <div class="widget" id="widget-lastfm"><p class="widget-loading">Carregando…</p></div>
-    <div class="widget" id="widget-youtube"><p class="widget-loading">Carregando…</p></div>
+  <div class="section-wrap">
+    <div class="section-head">
+      <span class="section-num">V.</span>
+      <h2>Agora</h2>
+      <p>O que estou ouvindo, jogando e publicando, em tempo real.</p>
+    </div>
+    <div class="agora-grid">
+      <div class="widget" id="widget-lastfm"><p class="widget-loading">Carregando…</p></div>
+      <div class="widget" id="widget-youtube"><p class="widget-loading">Carregando…</p></div>
+    </div>
   </div>
 </section>
 
