@@ -20,7 +20,7 @@ const PUBLICACOES = [
     tipo: "artigo",
     ano: 2018,
     instituicao: "Universidade de Brasília",
-    arquivo: "",
+    arquivo: "2018_PedroMartinsLopes_tcc.pdf",
     link: "https://bdm.unb.br/handle/10483/21024"
   }
 ];
