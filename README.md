@@ -5,9 +5,10 @@ Página única com quatro seções: sobre mim, estante de livros, publicações 
 
 ## Arquivos que você edita
 
-- **`config.js`** — seu nome, bio, e usuários/chaves das três APIs
+- **`config.js`** — seu nome, bio curta, texto completo de "Sobre mim", e usuários/chaves das APIs
 - **`books-data.js`** — sua lista de livros
 - **`publicacoes-data.js`** — seus artigos, TCC, etc.
+- **`galeria-data.js`** — suas fotos
 
 Os outros arquivos (`index.html`, `style.css`, `site.js`) não precisam de
 edição — eles só leem os três arquivos acima.
@@ -43,6 +44,17 @@ data de leitura e capa (buscada automaticamente pela Open Library a
 partir do ISBN — sem precisar de chave). Livros sem ISBN cadastrado no
 Goodreads aparecem com um quadrado com a inicial do título no lugar da
 capa. Pra adicionar um livro novo, copie um bloco inteiro e preencha.
+
+### 6. Galeria
+Crie uma pasta `assets/galeria/` no repositório e coloque suas fotos lá.
+Abra `galeria-data.js` e, pra cada foto, aponte o caminho (ex:
+`"assets/galeria/praia.jpg"`) e escreva uma legenda curta. Clicar numa
+foto no site abre ela em tamanho maior.
+
+> Dica: fotos muito grandes deixam o site lento pra carregar. Se puder,
+> redimensione as fotos pra no máximo ~1500px de largura antes de subir
+> (qualquer app de galeria do celular tem opção de "redimensionar" ou
+> "compactar" ao compartilhar).
 
 ## Testar localmente
 
