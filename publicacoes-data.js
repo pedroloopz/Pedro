@@ -16,12 +16,11 @@ const PUBLICACOES = [
     link: ""
   },
   {
-    titulo: "Nome de um artigo publicado",
+    titulo: "Maihime (“A Bailarina”) de Mori Ogai : um exemplo do romantismo japonês",
     tipo: "artigo",
-    ano: 2025,
-    instituicao: "Nome do veículo ou revista",
-    resumo: "Resumo curto do artigo.",
+    ano: 2018,
+    instituicao: "Universidade de Brasília",
     arquivo: "",
-    link: "https://exemplo.com/artigo"
+    link: "https://bdm.unb.br/handle/10483/21024"
   }
 ];
