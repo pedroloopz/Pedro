@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Meu mundo</title>
-<meta name="description" content="Sobre mim, livros lidos, publicações e o que ando fazendo agora.">
+<meta name="description" content="Sobre mim, publicações, o que ando fazendo agora e os livros que li.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -17,9 +17,9 @@
   <div class="nav-links">
     <a href="#sobre">Sobre</a>
     <a href="#galeria">Galeria</a>
-    <a href="#estante">Estante</a>
     <a href="#publicacoes">Publicações</a>
     <a href="#agora">Agora</a>
+    <a href="#estante">Estante</a>
   </div>
 </nav>
 
@@ -53,12 +53,39 @@
 </section>
 <div class="divider"></div>
 
-<section id="estante">
+<section id="publicacoes">
   <div class="section-wrap">
     <div class="section-head">
       <span class="section-num">III.</span>
+      <h2>Publicações</h2>
+      <p>Artigos, TCC e outros textos.</p>
+    </div>
+    <div class="catalog"><div class="publicacoes-flat" id="publicacoes-grid"></div></div>
+  </div>
+</section>
+<div class="divider"></div>
+
+<section id="agora">
+  <div class="section-wrap">
+    <div class="section-head">
+      <span class="section-num">IV.</span>
+      <h2>Agora</h2>
+      <p>O que estou ouvindo, jogando e publicando, em tempo real.</p>
+    </div>
+    <div class="agora-grid">
+      <div class="widget" id="widget-lastfm"><p class="widget-loading">Carregando…</p></div>
+      <div class="widget" id="widget-youtube"><p class="widget-loading">Carregando…</p></div>
+    </div>
+  </div>
+</section>
+<div class="divider"></div>
+
+<section id="estante">
+  <div class="section-wrap">
+    <div class="section-head">
+      <span class="section-num">V.</span>
       <h2>Estante</h2>
-      <p>Os livros que passaram por mim — lidos, em andamento e na fila. Cor da lombada indica o idioma.</p>
+      <p>Os livros que passaram por mim — lidos, em andamento e na fila. Cor da lombada indica o idioma; clique numa lombada pra ir direto ao livro.</p>
     </div>
 
     <div class="shelf-section">
@@ -79,33 +106,6 @@
     </div>
 
     <main class="catalog" id="catalog"></main>
-  </div>
-</section>
-<div class="divider"></div>
-
-<section id="publicacoes">
-  <div class="section-wrap">
-    <div class="section-head">
-      <span class="section-num">IV.</span>
-      <h2>Publicações</h2>
-      <p>Artigos, TCC e outros textos.</p>
-    </div>
-    <div class="catalog"><div class="publicacoes-flat" id="publicacoes-grid"></div></div>
-  </div>
-</section>
-<div class="divider"></div>
-
-<section id="agora">
-  <div class="section-wrap">
-    <div class="section-head">
-      <span class="section-num">V.</span>
-      <h2>Agora</h2>
-      <p>O que estou ouvindo, jogando e publicando, em tempo real.</p>
-    </div>
-    <div class="agora-grid">
-      <div class="widget" id="widget-lastfm"><p class="widget-loading">Carregando…</p></div>
-      <div class="widget" id="widget-youtube"><p class="widget-loading">Carregando…</p></div>
-    </div>
   </div>
 </section>
 
