@@ -8,12 +8,11 @@
 
 const PUBLICACOES = [
   {
-    titulo: "Título do seu TCC ou artigo",
+    titulo: "Prelúdio, Poemas e Contos",
     tipo: "tcc",
-    ano: 2024,
-    instituicao: "Nome da instituição",
-    resumo: "Um resumo curto de duas ou três linhas sobre do que se trata o trabalho.",
-    arquivo: "assets/meu-tcc.pdf",
+    ano: 2021,
+    resumo: "Poemas e contos.",
+    arquivo: "PRELÚDIO, poemas e contos.pdf",
     link: ""
   },
   {
