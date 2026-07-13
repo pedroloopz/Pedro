@@ -5,15 +5,15 @@
 const CONFIG = {
 
   // ---------- Sobre mim ----------
-  nome: "Seu nome",
+  nome: "Pedro",
   titulo: "Educador e homem de letras",
-  bio: "Professor e eterno estudante de idiomas, apaixonado por literatura e educação. Entre a sala de aula, o xadrez e um hiperfoco ou outro, tento hoje honrar com orgulho quem me trouxe até aqui.",
+  bio: "Vivo na fronteira entre idiomas — professor de uns, aprendiz de outros — com a literatura como bússola e o tempo como o bem mais raro que carrego.",
 
   // Texto completo da seção "Sobre mim" — cada string do array vira um parágrafo
   sobreMim: [
-    "Ingressei na universidade aos dezesseis anos — precocidade que, no entanto, não fez de mim um bom aluno: fui, por muito tempo, um viciado em jogos antes de ser um dedicado aos livros. A mudança veio por um caminho que não escolhi: a descoberta de uma doença grave no coração, que abalou sobretudo o psicológico de minha mãe, e que me ensinou, ainda jovem, o valor do tempo bem empregado. Foi ali que os jogos cederam lugar aos livros. Filho de Suzane e Neto, hoje tento retribuir em orgulho o que outrora não soube dar.",
-    "Leciono e estudo japonês, alemão, inglês e português, e exerço, como supervisor, a mesma paciência que dedico à gramática de idiomas alheios. A literatura é meu território de eleição — debrucei-me sobre Mori Ōgai no meu TCC, e mantenho afeição pelo Romantismo, seus excessos e sua fé obstinada no sentimento. Nas horas vagas, o xadrez me ensina a paciência que a vida às vezes recusa, e o futebol, a paixão que a razão não explica. Já fui tomado por um hiperfoco em Franz Liszt, e depois por outro na Segunda Guerra Mundial — este último, suspeito, poucos homens da minha geração escaparam.",
-    "Falo sobre cultura e educação no YouTube. Católico batizado em 2024, não me proclamo bom cristão — apenas um que se esforça, sabendo que a busca importa mais que a chegada. Ácido quando a ocasião pede, engraçado quando a vida permite."
+    "Ingressei na universidade aos dezesseis anos — precocidade que, no entanto, não fez de mim um bom aluno: fui, por muito tempo, um viciado em jogos antes de ser um dedicado aos livros. A mudança veio por um caminho que não escolhi: a descoberta de uma doença grave no coração, que abalou sobretudo o psicológico de minha mãe, e que me ensinou, ainda jovem, o valor do tempo bem empregado. Foi ali que os jogos cederam lugar aos livros. Filho de Suzane e Neto, hoje tento retribuir em orgulho o que outrora não soube dar.
+Leciono e estudo japonês, alemão, inglês e português, e exerço, como supervisor, a mesma paciência que dedico à gramática de idiomas alheios. A literatura é meu território de eleição — debrucei-me sobre Mori Ōgai no meu TCC, e mantenho afeição pelo Romantismo, seus excessos e sua fé obstinada no sentimento. Nas horas vagas, o xadrez me ensina a paciência que a vida às vezes recusa, e o futebol, a paixão que a razão não explica. Já fui tomado por um hiperfoco em Franz Liszt, e depois por outro na Segunda Guerra Mundial — este último, suspeito, poucos homens da minha geração escaparam.
+Falo sobre cultura e educação no YouTube. Católico batizado em 2024, não me proclamo bom cristão — apenas um que se esforça, sabendo que a busca importa mais que a chegada. Ácido quando a ocasião pede, engraçado quando a vida permite."
   ],
 
   // ---------- Last.fm ----------
