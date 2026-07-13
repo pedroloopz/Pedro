@@ -71,20 +71,47 @@ function renderStats(){
   `;
 }
 
+// ---------- Idioma → cor (hash determinístico) ----------
+const LANG_PALETTE_SIZE = 8;
+function langColorIndex(tag){
+  if(!tag) return null;
+  let hash = 0;
+  for(let i = 0; i < tag.length; i++){
+    hash = tag.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return Math.abs(hash) % LANG_PALETTE_SIZE;
+}
+function langClass(book){
+  const lang = (book.tags || [])[0];
+  const idx = langColorIndex(lang);
+  return idx === null ? 'idioma-default' : `idioma-${idx}`;
+}
+
 function renderShelf(){
   const shelf = document.getElementById('shelf');
   shelf.innerHTML = BOOKS.map(b => {
-    const height = Math.min(220, Math.max(110, 90 + (b.paginas || 100) / 6));
+    const height = Math.min(230, Math.max(115, 90 + (b.paginas || 100) / 6));
     return `
-      <div class="spine nota-${b.nota}" style="height:${height}px" tabindex="0" role="button" aria-label="${b.titulo}, de ${b.autor}">
+      <div class="spine ${langClass(b)}" style="height:${height}px" tabindex="0" role="button" aria-label="${b.titulo}, de ${b.autor}">
         <span>${b.titulo}</span>
         <div class="spine-tooltip">
           <strong>${b.titulo}</strong>
           <em>${b.autor} · ${statusLabel[b.status]}</em>
+          ${b.tags.length ? `<em>${b.tags.join(', ')}</em>` : ''}
+          <span class="tt-date">${formatDate(b.dataLeitura)}</span>
         </div>
       </div>
     `;
   }).join('');
+
+  const legend = document.getElementById('shelf-legend');
+  if(legend){
+    const langs = [...new Set(BOOKS.map(b => (b.tags || [])[0]).filter(Boolean))];
+    legend.innerHTML = langs.map(l => {
+      const idx = langColorIndex(l);
+      return `<span class="legend-item"><span class="legend-swatch idioma-${idx}"></span>${l}</span>`;
+    }).join('');
+  }
 }
 
 function renderCatalog(filter){
