@@ -6,7 +6,8 @@
 // status: "lido" | "lendo" | "quero-ler"
 // nota: 0 a 5 (0 = sem nota ainda)
 // isbn: usado pra buscar a capa automaticamente (Open Library) — deixe "" se não souber
-// tags: lista livre, ex: ["russo", "filosofia"]
+// tags: lista livre, ex: ["russo", "filosofia"] — a primeira tag vira o idioma usado pra colorir e agrupar
+// editora: opcional — aparece no lugar do número de páginas quando preenchida
 
 const BOOKS = [
   {
@@ -866,5 +867,41 @@ const BOOKS = [
     dataLeitura: "2021-01-01",
     resenha: "",
     isbn: "9780486421278"
+  },
+  {
+    titulo: "As Crônicas de Nárnia",
+    autor: "C. S. Lewis",
+    editora: "HarperCollins",
+    tags: ["português"],
+    paginas: 0,
+    status: "lendo",
+    nota: 0,
+    dataLeitura: null,
+    resenha: "",
+    isbn: ""
+  },
+  {
+    titulo: "Oscar Wilde: Uma Vida",
+    autor: "Matthew Sturgis",
+    editora: "Amarylis",
+    tags: ["português"],
+    paginas: 0,
+    status: "lendo",
+    nota: 0,
+    dataLeitura: null,
+    resenha: "",
+    isbn: ""
+  },
+  {
+    titulo: "Spiritus Mundi",
+    autor: "Northrop Frye",
+    editora: "Sétimo Selo",
+    tags: ["português"],
+    paginas: 0,
+    status: "lendo",
+    nota: 0,
+    dataLeitura: null,
+    resenha: "",
+    isbn: ""
   },
 ];
