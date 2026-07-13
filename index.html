@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meu mundo</title>
+<meta name="description" content="Sobre mim, livros lidos, publicações e o que ando fazendo agora.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav>
+  <span class="nav-name" id="nav-nome">Seu nome</span>
+  <div class="nav-links">
+    <a href="#sobre">Sobre</a>
+    <a href="#estante">Estante</a>
+    <a href="#publicacoes">Publicações</a>
+    <a href="#agora">Agora</a>
+  </div>
+</nav>
+
+<header class="hero" id="sobre">
+  <p class="eyebrow" id="hero-titulo">Professor · Escritor · Pesquisador</p>
+  <h1 id="hero-nome">Seu nome</h1>
+  <p class="sub" id="hero-bio">Escreva aqui sua bio em config.js.</p>
+  <div class="stats" id="stats"></div>
+</header>
+
+<section id="estante">
+  <div class="section-head">
+    <h2>Estante</h2>
+    <p>Os livros que passaram por mim — lidos, em andamento e na fila.</p>
+  </div>
+
+  <div class="shelf-section">
+    <p class="shelf-label">Passe o mouse sobre uma lombada</p>
+    <div class="shelf-wrap">
+      <div class="shelf" id="shelf"></div>
+      <div class="shelf-board"></div>
+    </div>
+  </div>
+
+  <div class="filters" id="filters">
+    <button class="filter-btn active" data-filter="todos">Todos</button>
+    <button class="filter-btn" data-filter="lido">Lidos</button>
+    <button class="filter-btn" data-filter="lendo">Lendo</button>
+    <button class="filter-btn" data-filter="quero-ler">Quero ler</button>
+    <span class="count-tag" id="count"></span>
+  </div>
+
+  <main class="catalog" id="catalog"></main>
+</section>
+
+<section id="publicacoes">
+  <div class="section-head">
+    <h2>Publicações</h2>
+    <p>Artigos, TCC e outros textos.</p>
+  </div>
+  <div class="catalog" id="publicacoes-grid"></div>
+</section>
+
+<section id="agora">
+  <div class="section-head">
+    <h2>Agora</h2>
+    <p>O que estou ouvindo, jogando e publicando, em tempo real.</p>
+  </div>
+  <div class="agora-grid">
+    <div class="widget" id="widget-lastfm"><p class="widget-loading">Carregando…</p></div>
+    <div class="widget" id="widget-youtube"><p class="widget-loading">Carregando…</p></div>
+  </div>
+</section>
+
+<footer>
+  Feito com Claude · edite <code>config.js</code>, <code>books-data.js</code> e <code>publicacoes-data.js</code> pra personalizar
+</footer>
+
+<script src="config.js"></script>
+<script src="books-data.js"></script>
+<script src="publicacoes-data.js"></script>
+<script src="site.js"></script>
+
+</body>
+</html>
