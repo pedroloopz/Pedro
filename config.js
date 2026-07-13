@@ -19,8 +19,8 @@ Falo sobre cultura e educação no YouTube. Católico batizado em 2024, não me 
   // ---------- Last.fm ----------
   // Crie uma chave gratuita em: https://www.last.fm/api/account/create
   // (leva menos de 2 minutos, só precisa estar logado no Last.fm)
-  lastfmUsername: "seu_usuario_lastfm",
-  lastfmApiKey: "COLE_SUA_CHAVE_AQUI",
+  lastfmUsername: "pedroloopz",
+  lastfmApiKey: "5609096f6eb0f26fd794e5a676356a70",
 
   // ---------- YouTube ----------
   // 1. Crie um projeto em https://console.cloud.google.com
