@@ -271,15 +271,59 @@ async function renderLastfm(){
     if(!tracks.length) throw new Error('Nenhuma faixa encontrada');
     el.innerHTML = `
       <div class="widget-label">Last.fm — últimas faixas</div>
-      ${tracks.map(t => `
-        <div class="widget-row">
-          <span>${t.name} — <em style="color:var(--muted)">${t.artist['#text']}</em></span>
-          ${t['@attr']?.nowplaying ? '<strong style="color:var(--gold)">tocando</strong>' : ''}
-        </div>
-      `).join('')}
+      ${tracks.map(t => {
+        const album = t.album && t.album['#text'] ? t.album['#text'] : '';
+        const art = (t.image || []).find(img => img.size === 'medium')?.['#text'] || (t.image || []).slice(-1)[0]?.['#text'];
+        return `
+          <div class="lastfm-row">
+            ${art ? `<img class="lastfm-art" src="${art}" alt="" loading="lazy">` : `<div class="lastfm-art lastfm-art-fallback">♪</div>`}
+            <div class="lastfm-info">
+              <span class="lastfm-track">${t.name}${t['@attr']?.nowplaying ? ' <em class="lastfm-now">tocando</em>' : ''}</span>
+              <span class="lastfm-artist">${t.artist['#text']}</span>
+              ${album ? `<span class="lastfm-album">${album}</span>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('')}
     `;
   }catch(err){
     el.innerHTML = `<div class="widget-label">Last.fm</div><p class="widget-error">Não consegui carregar: ${err.message}</p>`;
+  }
+}
+
+// ---------- Agora: Last.fm — top 8 artistas de todos os tempos ----------
+async function renderLastfmTop(){
+  const el = document.getElementById('widget-lastfm-top');
+  if(!CONFIG.lastfmApiKey || CONFIG.lastfmApiKey === 'COLE_SUA_CHAVE_AQUI'){
+    el.innerHTML = '<p class="widget-error">Preencha "lastfmUsername" e "lastfmApiKey" em config.js</p>';
+    return;
+  }
+  try{
+    const url = `https://ws.audioscrobbler.com/2.0/?method=user.gettopartists&user=${CONFIG.lastfmUsername}&api_key=${CONFIG.lastfmApiKey}&format=json&period=overall&limit=8`;
+    const res = await fetch(url);
+    if(!res.ok) throw new Error('Falha na requisição');
+    const data = await res.json();
+    const artistas = data.topartists?.artist || [];
+    if(!artistas.length) throw new Error('Nenhum artista encontrado');
+    el.innerHTML = `
+      <div class="widget-label">Last.fm — top 8 artistas (geral)</div>
+      <div class="top-artistas">
+        ${artistas.map((a, i) => {
+          const img = (a.image || []).find(im => im.size === 'large')?.['#text'] || (a.image || []).slice(-1)[0]?.['#text'];
+          return `
+            <a class="artista-item" href="${a.url}" target="_blank" rel="noopener">
+              <span class="artista-pos">${i + 1}</span>
+              ${img ? `<img class="artista-img" src="${img}" alt="" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">` : ''}
+              <span class="artista-img artista-img-fallback" style="${img ? 'display:none' : ''}">${a.name.charAt(0)}</span>
+              <span class="artista-nome">${a.name}</span>
+              <span class="artista-scrobbles">${Number(a.playcount).toLocaleString('pt-BR')} scrobbles</span>
+            </a>
+          `;
+        }).join('')}
+      </div>
+    `;
+  }catch(err){
+    el.innerHTML = `<div class="widget-label">Top artistas</div><p class="widget-error">Não consegui carregar: ${err.message}</p>`;
   }
 }
 
@@ -317,6 +361,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderGaleria();
   renderPublicacoes();
   renderLastfm();
+  renderLastfmTop();
   renderYoutube();
 
   await buscarCapasFaltantes();
