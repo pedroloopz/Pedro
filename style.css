@@ -389,6 +389,45 @@ header.hero p.sub{
 .widget-sub{ color: var(--muted); font-size: 0.85rem; }
 .widget-row{ display:flex; justify-content: space-between; align-items:center; font-size:0.85rem; padding: 0.5rem 0; border-bottom: 1px dashed var(--hairline-strong); color: var(--ink-dim); }
 .widget-row:last-child{ border-bottom: none; }
+
+.lastfm-row{
+  display: flex; align-items: center; gap: 0.7rem;
+  padding: 0.5rem 0; border-bottom: 1px dashed var(--hairline-strong);
+}
+.lastfm-row:last-child{ border-bottom: none; }
+.lastfm-art{ width: 42px; height: 42px; object-fit: cover; flex: 0 0 auto; border: 1px solid var(--hairline-strong); }
+.lastfm-art-fallback{
+  display:flex; align-items:center; justify-content:center;
+  background: var(--panel-raised); color: var(--muted); font-size: 1.1rem;
+}
+.lastfm-info{ display:flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
+.lastfm-track{ font-size: 0.87rem; color: var(--ink); font-weight: 600; }
+.lastfm-now{ color: var(--gold); font-style: normal; font-family: 'JetBrains Mono', monospace; font-size: 0.62rem; text-transform: uppercase; margin-left: 0.3rem; }
+.lastfm-artist{ font-size: 0.78rem; color: var(--ink-dim); }
+.lastfm-album{ font-size: 0.72rem; color: var(--muted); font-style: italic; }
+
+.top-artistas{ display:flex; flex-direction: column; gap: 0.1rem; }
+.artista-item{
+  display:flex; align-items:center; gap: 0.6rem;
+  padding: 0.45rem 0; border-bottom: 1px dashed var(--hairline-strong);
+}
+.artista-item:last-child{ border-bottom: none; }
+.artista-item:hover .artista-nome{ color: var(--gold); }
+.artista-pos{
+  font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: var(--muted);
+  width: 1.1rem; flex: 0 0 auto; text-align: right;
+}
+.artista-img{
+  width: 34px; height: 34px; object-fit: cover; border-radius: 50%;
+  flex: 0 0 auto; border: 1px solid var(--hairline-strong);
+}
+.artista-img-fallback{
+  display:flex; align-items:center; justify-content:center;
+  background: var(--panel-raised); color: var(--muted);
+  font-family: 'Fraunces', serif; font-size: 0.9rem;
+}
+.artista-nome{ flex: 1; min-width: 0; font-size: 0.87rem; color: var(--ink-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: color 0.15s ease; }
+.artista-scrobbles{ font-family: 'JetBrains Mono', monospace; font-size: 0.66rem; color: var(--muted); flex: 0 0 auto; }
 .yt-thumb{ width: 100%; display:block; margin-bottom: 0.5rem; border: 1px solid var(--hairline-strong); }
 .widget-error{ color: var(--bordeaux-line); font-size: 0.8rem; font-family: 'JetBrains Mono', monospace; }
 .widget-loading{ color: var(--muted); font-size: 0.85rem; font-style: italic; }
