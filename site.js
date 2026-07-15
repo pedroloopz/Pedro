@@ -255,42 +255,6 @@ function renderPublicacoes(){
   `).join('');
 }
 
-// ---------- Agora: Last.fm ----------
-async function renderLastfm(){
-  const el = document.getElementById('widget-lastfm');
-  if(!CONFIG.lastfmApiKey || CONFIG.lastfmApiKey === 'COLE_SUA_CHAVE_AQUI'){
-    el.innerHTML = '<p class="widget-error">Preencha "lastfmUsername" e "lastfmApiKey" em config.js</p>';
-    return;
-  }
-  try{
-    const url = `https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=${CONFIG.lastfmUsername}&api_key=${CONFIG.lastfmApiKey}&format=json&limit=4`;
-    const res = await fetch(url);
-    if(!res.ok) throw new Error('Falha na requisição');
-    const data = await res.json();
-    const tracks = data.recenttracks?.track || [];
-    if(!tracks.length) throw new Error('Nenhuma faixa encontrada');
-    el.innerHTML = `
-      <div class="widget-label">Last.fm — últimas faixas</div>
-      ${tracks.map(t => {
-        const album = t.album && t.album['#text'] ? t.album['#text'] : '';
-        const art = (t.image || []).find(img => img.size === 'medium')?.['#text'] || (t.image || []).slice(-1)[0]?.['#text'];
-        return `
-          <div class="lastfm-row">
-            ${art ? `<img class="lastfm-art" src="${art}" alt="" loading="lazy">` : `<div class="lastfm-art lastfm-art-fallback">♪</div>`}
-            <div class="lastfm-info">
-              <span class="lastfm-track">${t.name}${t['@attr']?.nowplaying ? ' <em class="lastfm-now">tocando</em>' : ''}</span>
-              <span class="lastfm-artist">${t.artist['#text']}</span>
-              ${album ? `<span class="lastfm-album">${album}</span>` : ''}
-            </div>
-          </div>
-        `;
-      }).join('')}
-    `;
-  }catch(err){
-    el.innerHTML = `<div class="widget-label">Last.fm</div><p class="widget-error">Não consegui carregar: ${err.message}</p>`;
-  }
-}
-
 // ---------- Agora: Last.fm — faixas favoritas (loved tracks) ----------
 async function renderLastfmLoved(){
   const el = document.getElementById('widget-lastfm-loved');
@@ -359,7 +323,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderSobre();
   renderGaleria();
   renderPublicacoes();
-  renderLastfm();
   renderLastfmLoved();
   renderYoutube();
 
