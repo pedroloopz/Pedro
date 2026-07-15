@@ -60,15 +60,9 @@ function callNumber(prefix, num, idx){
   return `${prefix}-${String(num).slice(0,2)}.${idx+1}`;
 }
 
-function renderStats(){
-  const lidos = BOOKS.filter(b => b.status === 'lido').length;
-  const paginas = BOOKS.filter(b => b.status === 'lido').reduce((s,b) => s + b.paginas, 0);
-  const lendo = BOOKS.filter(b => b.status === 'lendo').length;
-  document.getElementById('stats').innerHTML = `
-    <div><span class="n">${lidos}</span><span class="l">livros lidos</span></div>
-    <div><span class="n">${paginas.toLocaleString('pt-BR')}</span><span class="l">páginas viradas</span></div>
-    <div><span class="n">${lendo}</span><span class="l">em andamento</span></div>
-  `;
+function renderFatos(){
+  const el = document.getElementById('stats');
+  el.innerHTML = (CONFIG.fatos || []).map(f => `<span class="fato">${f}</span>`).join('<span class="fato-sep">·</span>');
 }
 
 // ---------- Capas automáticas (livros sem ISBN) ----------
@@ -354,13 +348,13 @@ async function renderYoutube(){
 // ---------- init ----------
 document.addEventListener('DOMContentLoaded', async () => {
   renderSobre();
+  renderFatos();
   renderGaleria();
   renderPublicacoes();
   renderLastfmLoved();
   renderYoutube();
 
   await buscarCapasFaltantes();
-  renderStats();
   renderShelf();
   renderCatalog('todos');
 
