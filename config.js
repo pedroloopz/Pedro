@@ -27,7 +27,7 @@ const CONFIG = {
   // 2. Ative a "YouTube Data API v3"
   // 3. Crie uma chave de API (Credenciais → Criar credenciais → Chave de API)
   // 4. Seu Channel ID: vá no seu canal → "Sobre" → "Compartilhar canal" → "Copiar ID do canal"
-  youtubeChannelId: "SEU_CHANNEL_ID",
-  youtubeApiKey: "COLE_SUA_CHAVE_AQUI",
+  youtubeChannelId: "UCQG9bzwD5olAdibmmiJkxHg",
+  youtubeApiKey: "AIzaSyAwA7ktPwxQ6k_uxG0Dm5QWJ3CvDOfvnlo",
 
 };
