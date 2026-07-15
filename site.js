@@ -256,14 +256,20 @@ function renderPublicacoes(){
 }
 
 // ---------- Agora: Last.fm — faixas favoritas (loved tracks) ----------
-async function buscarCapaItunes(termo){
+const LASTFM_PLACEHOLDER = '2a96cbd8b46e442fc41c2b86b821562f'; // hash da imagem genérica "sem capa" do Last.fm
+
+function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
+
+async function buscarCapaMusicBrainz(artista, faixa){
   try{
-    const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(termo)}&media=music&limit=1`);
+    const query = encodeURIComponent(`recording:"${faixa}" AND artist:"${artista}"`);
+    const res = await fetch(`https://musicbrainz.org/ws/2/recording/?query=${query}&fmt=json&limit=1`);
     if(!res.ok) return null;
     const data = await res.json();
-    const item = data.results && data.results[0];
-    if(!item || !item.artworkUrl100) return null;
-    return item.artworkUrl100.replace('100x100', '300x300');
+    const gravacao = data.recordings && data.recordings[0];
+    const releaseId = gravacao?.releases?.[0]?.id;
+    if(!releaseId) return null;
+    return `https://coverartarchive.org/release/${releaseId}/front-250`;
   }catch(e){ return null; }
 }
 
@@ -281,18 +287,12 @@ async function renderLastfmLoved(){
     const faixas = data.lovedtracks?.track || [];
     if(!faixas.length) throw new Error('Nenhuma faixa favoritada encontrada');
 
-    // Tenta pegar capa do Last.fm; se não vier, busca no iTunes em paralelo
-    await Promise.all(faixas.map(async (t) => {
-      const artLastfm = (t.image || []).find(im => im.size === 'medium')?.['#text'];
-      t._art = artLastfm || await buscarCapaItunes(`${t.artist.name} ${t.name}`);
-    }));
-
+    // Renderiza já com o que tem, pra não travar a tela esperando a busca de capas
     el.innerHTML = `
       <div class="widget-label">Last.fm — faixas favoritas de @${CONFIG.lastfmUsername} ♥</div>
-      ${faixas.map(t => `
-          <a class="lastfm-row" href="${t.url}" target="_blank" rel="noopener">
-            ${t._art ? `<img class="lastfm-art" src="${t._art}" alt="" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">` : ''}
-            <span class="lastfm-art lastfm-art-fallback" style="${t._art ? 'display:none' : ''}">♥</span>
+      ${faixas.map((t, i) => `
+          <a class="lastfm-row" href="${t.url}" target="_blank" rel="noopener" id="loved-${i}">
+            <span class="lastfm-art lastfm-art-fallback">♥</span>
             <div class="lastfm-info">
               <span class="lastfm-track">${t.name}</span>
               <span class="lastfm-artist">${t.artist.name}</span>
@@ -300,6 +300,24 @@ async function renderLastfmLoved(){
           </a>
       `).join('')}
     `;
+
+    // Busca capas: usa a do Last.fm se for real (não o placeholder genérico),
+    // senão tenta no MusicBrainz/Cover Art Archive — uma de cada vez, por
+    // causa do limite de 1 requisição/segundo deles.
+    for(let i = 0; i < faixas.length; i++){
+      const t = faixas[i];
+      const artLastfm = (t.image || []).find(im => im.size === 'medium')?.['#text'];
+      let art = (artLastfm && !artLastfm.includes(LASTFM_PLACEHOLDER)) ? artLastfm : null;
+      if(!art){
+        art = await buscarCapaMusicBrainz(t.artist.name, t.name);
+        await sleep(1100);
+      }
+      if(art){
+        const row = document.getElementById(`loved-${i}`);
+        if(row) row.querySelector('.lastfm-art').outerHTML =
+          `<img class="lastfm-art" src="${art}" alt="" loading="lazy" onerror="this.outerHTML='<span class=&quot;lastfm-art lastfm-art-fallback&quot;>♥</span>';">`;
+      }
+    }
   }catch(err){
     el.innerHTML = `<div class="widget-label">Faixas favoritas</div><p class="widget-error">Não consegui carregar: ${err.message}</p>`;
   }
