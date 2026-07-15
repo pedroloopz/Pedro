@@ -6,8 +6,8 @@ const CONFIG = {
 
   // ---------- Sobre mim ----------
   nome: "Pedro Martins",
-  titulo: "Educador e homem de letras",
-  bio: "Vivo na fronteira entre idiomas — professor de uns, aprendiz de outros — com a literatura como bússola e o tempo como o bem mais raro que carrego.",
+  titulo: "Sprachwanderer",
+  bio: "Ensino idiomas que não nasci falando. O resto é tempo bem gasto tentando merecer o que quase não tive.",
 
   // Texto completo da seção "Sobre mim" — cada string do array vira um parágrafo
   sobreMim: [
