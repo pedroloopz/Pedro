@@ -219,7 +219,7 @@ function cardHTML(b, i){
           ${b.tags.length ? `<div class="tags">${b.tags.map(t => `<span class="tag">${t}</span>`).join('')}</div>` : ''}
         </div>
       </div>
-      <p class="resenha ${b.resenha ? '' : 'empty'}">${b.resenha || 'Sem anotação ainda.'}</p>
+      ${b.resenha ? `<p class="resenha">${b.resenha}</p>` : ''}
       <div class="card-meta">
         <span>${b.editora ? b.editora : (b.paginas ? b.paginas + ' pág.' : '—')}</span>
         <span>${formatDate(b.dataLeitura)}</span>
