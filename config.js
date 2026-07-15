@@ -9,6 +9,9 @@ const CONFIG = {
   titulo: "Sprachwanderer",
   bio: "Ensino idiomas que não nasci falando. O resto é tempo bem gasto tentando merecer o que quase não tive.",
 
+  // Aparece como uma linha de fatos rápidos logo abaixo do seu nome
+  fatos: ["30 anos", "Formado em Letras Inglês e Japonês pela UnB", "Pós-graduando", "Escritor"],
+
   // Texto completo da seção "Sobre mim" — cada string do array vira um parágrafo
   sobreMim: [
     "Ingressei na universidade aos dezesseis anos — precocidade que, no entanto, não fez de mim um bom aluno: fui, por muito tempo, um viciado em jogos antes de ser um dedicado aos livros. A mudança veio por um caminho que não escolhi: a descoberta de uma doença grave no coração, que abalou sobretudo o psicológico de minha mãe, e que me ensinou, ainda jovem, o valor do tempo bem empregado. Foi ali que os jogos cederam lugar aos livros. Filho de Suzane e Neto, hoje tento retribuir em orgulho o que outrora não soube dar.",
