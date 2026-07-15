@@ -9,17 +9,19 @@
 const PUBLICACOES = [
   {
     titulo: "Prelúdio, Poemas e Contos",
-    tipo: "tcc",
+    tipo: "publicacao",
     ano: 2021,
+    instituicao: "",
     resumo: "Poemas e contos.",
     arquivo: "PRELÚDIO, poemas e contos.pdf",
     link: ""
   },
   {
-    titulo: "Maihime (“A Bailarina”) de Mori Ogai : um exemplo do romantismo japonês",
-    tipo: "artigo",
+    titulo: "Maihime (\"A Bailarina\") de Mori Ōgai: um exemplo do romantismo japonês",
+    tipo: "tcc",
     ano: 2018,
     instituicao: "Universidade de Brasília",
+    resumo: "Trabalho de conclusão de curso sobre Mori Ōgai e o romantismo japonês.",
     arquivo: "2018_PedroMartinsLopes_tcc.pdf",
     link: "https://bdm.unb.br/handle/10483/21024"
   }
