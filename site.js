@@ -291,39 +291,38 @@ async function renderLastfm(){
   }
 }
 
-// ---------- Agora: Last.fm — top 8 artistas de todos os tempos ----------
-async function renderLastfmTop(){
-  const el = document.getElementById('widget-lastfm-top');
+// ---------- Agora: Last.fm — faixas favoritas (loved tracks) ----------
+async function renderLastfmLoved(){
+  const el = document.getElementById('widget-lastfm-loved');
   if(!CONFIG.lastfmApiKey || CONFIG.lastfmApiKey === 'COLE_SUA_CHAVE_AQUI'){
     el.innerHTML = '<p class="widget-error">Preencha "lastfmUsername" e "lastfmApiKey" em config.js</p>';
     return;
   }
   try{
-    const url = `https://ws.audioscrobbler.com/2.0/?method=user.gettopartists&user=${CONFIG.lastfmUsername}&api_key=${CONFIG.lastfmApiKey}&format=json&period=overall&limit=8`;
+    const url = `https://ws.audioscrobbler.com/2.0/?method=user.getlovedtracks&user=${CONFIG.lastfmUsername}&api_key=${CONFIG.lastfmApiKey}&format=json&limit=8`;
     const res = await fetch(url);
     if(!res.ok) throw new Error('Falha na requisição');
     const data = await res.json();
-    const artistas = data.topartists?.artist || [];
-    if(!artistas.length) throw new Error('Nenhum artista encontrado');
+    const faixas = data.lovedtracks?.track || [];
+    if(!faixas.length) throw new Error('Nenhuma faixa favoritada encontrada');
     el.innerHTML = `
-      <div class="widget-label">Last.fm — top 8 artistas (geral)</div>
-      <div class="top-artistas">
-        ${artistas.map((a, i) => {
-          const img = (a.image || []).find(im => im.size === 'large')?.['#text'] || (a.image || []).slice(-1)[0]?.['#text'];
-          return `
-            <a class="artista-item" href="${a.url}" target="_blank" rel="noopener">
-              <span class="artista-pos">${i + 1}</span>
-              ${img ? `<img class="artista-img" src="${img}" alt="" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">` : ''}
-              <span class="artista-img artista-img-fallback" style="${img ? 'display:none' : ''}">${a.name.charAt(0)}</span>
-              <span class="artista-nome">${a.name}</span>
-              <span class="artista-scrobbles">${Number(a.playcount).toLocaleString('pt-BR')} scrobbles</span>
-            </a>
-          `;
-        }).join('')}
-      </div>
+      <div class="widget-label">Last.fm — faixas favoritas ♥</div>
+      ${faixas.map(t => {
+        const art = (t.image || []).find(im => im.size === 'medium')?.['#text'] || (t.image || []).slice(-1)[0]?.['#text'];
+        return `
+          <a class="lastfm-row" href="${t.url}" target="_blank" rel="noopener">
+            ${art ? `<img class="lastfm-art" src="${art}" alt="" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">` : ''}
+            <span class="lastfm-art lastfm-art-fallback" style="${art ? 'display:none' : ''}">♥</span>
+            <div class="lastfm-info">
+              <span class="lastfm-track">${t.name}</span>
+              <span class="lastfm-artist">${t.artist.name}</span>
+            </div>
+          </a>
+        `;
+      }).join('')}
     `;
   }catch(err){
-    el.innerHTML = `<div class="widget-label">Top artistas</div><p class="widget-error">Não consegui carregar: ${err.message}</p>`;
+    el.innerHTML = `<div class="widget-label">Faixas favoritas</div><p class="widget-error">Não consegui carregar: ${err.message}</p>`;
   }
 }
 
@@ -361,7 +360,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderGaleria();
   renderPublicacoes();
   renderLastfm();
-  renderLastfmTop();
+  renderLastfmLoved();
   renderYoutube();
 
   await buscarCapasFaltantes();
