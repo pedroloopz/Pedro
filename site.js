@@ -256,6 +256,17 @@ function renderPublicacoes(){
 }
 
 // ---------- Agora: Last.fm — faixas favoritas (loved tracks) ----------
+async function buscarCapaItunes(termo){
+  try{
+    const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(termo)}&media=music&limit=1`);
+    if(!res.ok) return null;
+    const data = await res.json();
+    const item = data.results && data.results[0];
+    if(!item || !item.artworkUrl100) return null;
+    return item.artworkUrl100.replace('100x100', '300x300');
+  }catch(e){ return null; }
+}
+
 async function renderLastfmLoved(){
   const el = document.getElementById('widget-lastfm-loved');
   if(!CONFIG.lastfmApiKey || CONFIG.lastfmApiKey === 'COLE_SUA_CHAVE_AQUI'){
@@ -269,21 +280,25 @@ async function renderLastfmLoved(){
     const data = await res.json();
     const faixas = data.lovedtracks?.track || [];
     if(!faixas.length) throw new Error('Nenhuma faixa favoritada encontrada');
+
+    // Tenta pegar capa do Last.fm; se não vier, busca no iTunes em paralelo
+    await Promise.all(faixas.map(async (t) => {
+      const artLastfm = (t.image || []).find(im => im.size === 'medium')?.['#text'];
+      t._art = artLastfm || await buscarCapaItunes(`${t.artist.name} ${t.name}`);
+    }));
+
     el.innerHTML = `
-      <div class="widget-label">Last.fm — faixas favoritas ♥</div>
-      ${faixas.map(t => {
-        const art = (t.image || []).find(im => im.size === 'medium')?.['#text'] || (t.image || []).slice(-1)[0]?.['#text'];
-        return `
+      <div class="widget-label">Last.fm — faixas favoritas de @${CONFIG.lastfmUsername} ♥</div>
+      ${faixas.map(t => `
           <a class="lastfm-row" href="${t.url}" target="_blank" rel="noopener">
-            ${art ? `<img class="lastfm-art" src="${art}" alt="" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">` : ''}
-            <span class="lastfm-art lastfm-art-fallback" style="${art ? 'display:none' : ''}">♥</span>
+            ${t._art ? `<img class="lastfm-art" src="${t._art}" alt="" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">` : ''}
+            <span class="lastfm-art lastfm-art-fallback" style="${t._art ? 'display:none' : ''}">♥</span>
             <div class="lastfm-info">
               <span class="lastfm-track">${t.name}</span>
               <span class="lastfm-artist">${t.artist.name}</span>
             </div>
           </a>
-        `;
-      }).join('')}
+      `).join('')}
     `;
   }catch(err){
     el.innerHTML = `<div class="widget-label">Faixas favoritas</div><p class="widget-error">Não consegui carregar: ${err.message}</p>`;
