@@ -24,5 +24,14 @@ const PUBLICACOES = [
     resumo: "Trabalho de conclusão de curso sobre Mori Ōgai e o romantismo japonês.",
     arquivo: "2018_PedroMartinsLopes_tcc.pdf",
     link: "https://bdm.unb.br/handle/10483/21024"
+  },
+  {
+    titulo: "A Insurreição do Silêncio",
+    tipo: "ensaio",
+    ano: 2026,
+    instituicao: "",
+    resumo: "",
+    arquivo: "A_Insurreicao_do_Silencio.pdf",
+    link: ""
   }
 ];
