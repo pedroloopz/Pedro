@@ -9,8 +9,11 @@ const CONFIG = {
   titulo: "Sprachwanderer",
   bio: "Ensino idiomas que não nasci falando. O resto é tempo bem gasto tentando merecer o que quase não tive.",
 
+  // Mês e ano de nascimento: a idade em "fatos" ({idade}) se atualiza sozinha
+  nascimento: "1996-07",
+
   // Aparece como uma linha de fatos rápidos logo abaixo do seu nome
-  fatos: ["30 anos", "Formado em Letras Inglês e Japonês pela UnB", "Pós-graduando", "Escritor"],
+  fatos: ["{idade} anos", "Formado em Letras Inglês e Japonês pela UnB", "Pós-graduando", "Escritor"],
 
   // Texto completo da seção "Sobre mim" — cada string do array vira um parágrafo
   sobreMim: [

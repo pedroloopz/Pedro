@@ -62,7 +62,16 @@ function callNumber(prefix, num, idx){
 
 function renderFatos(){
   const el = document.getElementById('stats');
-  el.innerHTML = (CONFIG.fatos || []).map(f => `<span class="fato">${f}</span>`).join('<span class="fato-sep">·</span>');
+  const idade = (() => {
+    const [a, m] = (CONFIG.nascimento || '').split('-').map(Number);
+    if (!a || !m) return '';
+    const h = new Date();
+    return h.getFullYear() - a - (h.getMonth() + 1 <= m ? 1 : 0);   // soma 1 no mês seguinte ao do aniversário
+  })();
+  el.innerHTML = (CONFIG.fatos || [])
+    .map(f => f.replace('{idade}', idade))
+    .filter(f => !/^\s*anos$/.test(f))
+    .map(f => `<span class="fato">${f}</span>`).join('<span class="fato-sep">·</span>');
 }
 
 // ---------- Capas automáticas (livros sem ISBN) ----------

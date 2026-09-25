@@ -4,21 +4,20 @@
 // final e preencha (o arquivo precisa estar dentro de assets/galeria/).
 
 const GALERIA = [
-  { arquivo: "assets/galeria/1.jpg", legenda: "" },
-  { arquivo: "assets/galeria/2.jpg", legenda: "" },
-  { arquivo: "assets/galeria/3.jpg", legenda: "" },
-  { arquivo: "assets/galeria/4.jpg", legenda: "" },
-  { arquivo: "assets/galeria/5.jpg", legenda: "" },
-  { arquivo: "assets/galeria/6.jpg", legenda: "" },
-  { arquivo: "assets/galeria/7.jpg", legenda: "" },
-  { arquivo: "assets/galeria/8.jpg", legenda: "" },
-  { arquivo: "assets/galeria/9.jpg", legenda: "" },
-  { arquivo: "assets/galeria/10.jpg", legenda: "" },
-  { arquivo: "assets/galeria/IMG001.jpg", legenda: "" },
-  { arquivo: "assets/galeria/IMG-20250928-WA0028.jpg", legenda: "" },
-  { arquivo: "assets/galeria/Screenshot_20260714_204846_Gallery.jpg", legenda: "" },
-  { arquivo: "assets/galeria/Screenshot_20260714_204910_Gallery.jpg", legenda: "" },
-  { arquivo: "assets/galeria/Screenshot_20260714_205024_Gallery.jpg", legenda: "" },
-  { arquivo: "assets/galeria/Screenshot_20260714_205902_Photos.jpg", legenda: "" },
-  { arquivo: "assets/galeria/Screenshot_20260714_205918_Photos.jpg", legenda: "" }
+  { arquivo: "assets/galeria/01.webp", legenda: "" },
+  { arquivo: "assets/galeria/02.webp", legenda: "" },
+  { arquivo: "assets/galeria/03.webp", legenda: "" },
+  { arquivo: "assets/galeria/04.webp", legenda: "" },
+  { arquivo: "assets/galeria/05.webp", legenda: "" },
+  { arquivo: "assets/galeria/06.webp", legenda: "" },
+  { arquivo: "assets/galeria/07.webp", legenda: "" },
+  { arquivo: "assets/galeria/08.webp", legenda: "" },
+  { arquivo: "assets/galeria/09.webp", legenda: "" },
+  { arquivo: "assets/galeria/10.webp", legenda: "" },
+  { arquivo: "assets/galeria/11.webp", legenda: "" },
+  { arquivo: "assets/galeria/12.webp", legenda: "" },
+  { arquivo: "assets/galeria/13.webp", legenda: "" },
+  { arquivo: "assets/galeria/14.webp", legenda: "" },
+  { arquivo: "assets/galeria/15.webp", legenda: "" },
+  { arquivo: "assets/galeria/16.webp", legenda: "" }
 ];
