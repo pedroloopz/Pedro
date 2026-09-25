@@ -1,0 +1,14 @@
+name: teste-chave-youtube
+on: workflow_dispatch
+jobs:
+  testar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          K=$(grep -o 'youtubeApiKey: *"[^"]*"' config.js | cut -d'"' -f2)
+          U="https://www.googleapis.com/youtube/v3/channels?part=id&id=UCQG9bzwD5olAdibmmiJkxHg&key=$K"
+          a=$(curl -s "$U" | python3 -c "import sys,json;d=json.load(sys.stdin);e=d.get('error');print('OK' if not e else str(e['code'])+' '+(e.get('errors') or [{}])[0].get('reason','')+' '+str((e.get('details') or [{}])[0].get('reason','')))")
+          b=$(curl -s -H "Referer: https://pedroloopz.github.io/Pedro/" "$U" | python3 -c "import sys,json;d=json.load(sys.stdin);e=d.get('error');print('OK' if not e else str(e['code'])+' '+(e.get('errors') or [{}])[0].get('reason','')+' '+str((e.get('details') or [{}])[0].get('reason','')))")
+          echo "::notice title=sem-site::$a"
+          echo "::notice title=pelo-site::$b"
