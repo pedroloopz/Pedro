@@ -401,6 +401,22 @@ body.lang-de .reader .rline{font-size:1.1rem; line-height:1.8}
   background:var(--ink); color:var(--bg); padding:10px 16px; border-radius:12px; font-size:.92rem; box-shadow:0 6px 24px rgba(0,0,0,.2)}
 @media (min-width:980px){ .gtoast{bottom:24px} }
 @media (prefers-reduced-motion:reduce){ *{transition:none!important; animation:none!important} }
+/* Poemas: o japonês aparece em tategaki (vertical, da direita para a esquerda) */
+.poem-wrap{display:flex; justify-content:center; overflow-x:auto; padding:10px 0 6px}
+.poem-face{font-family:var(--display); font-weight:600; color:var(--ink)}
+.poem-face .pv{display:block}
+.poem-face.tate{writing-mode:vertical-rl; text-orientation:mixed; font-size:clamp(1.35rem,4.8vw,1.8rem); line-height:2.1; letter-spacing:.16em; max-block-size:20em}
+.poem-face.tate .pgap{display:block; block-size:.9em}
+.poem-face.yoko{font-size:1.18rem; line-height:1.75; border-left:3px solid var(--accent); padding-left:16px; width:100%; max-width:34em}
+.poem-face.yoko .pgap{display:block; height:.85em}
+.pnote{display:grid; grid-template-columns:minmax(6em,auto) 1fr; gap:4px 12px; padding:8px 0; border-top:1px solid var(--line); font-size:.95rem}
+@media (max-width:420px){ .pnote{grid-template-columns:1fr} }
+.memo{display:flex; flex-direction:column; gap:6px}
+.mline{display:block; width:100%; text-align:left; border:1px dashed var(--line); background:transparent; border-radius:10px; padding:8px 12px; font-family:var(--display); font-size:1.12rem; min-height:44px; color:var(--ink)}
+.mline.full{border-style:solid; border-color:transparent; background:var(--sunk)}
+.mline.peek{border-style:solid; border-color:var(--warn)}
+.mline .mgap{color:var(--muted); letter-spacing:.12em}
+.pgap-h{height:4px}
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -4403,6 +4419,106 @@ perguntas:[["Por que o supermercado estava cheio?","Porque segunda era feriado",
 ["Como o narrador voltou para casa?","De bicicleta","De ônibus","A pé","De carro"]]}
 ];
 
+/* Poemas (domínio público). versos: [texto, leitura em kana (só japonês), tradução]
+   quebras: índices depois dos quais começa nova estrofe. notas: [termo, explicação]
+   perguntas: [pergunta, certa, errada, errada, errada] */
+window.LM_POEM = [
+{id:"p-ja-furuike",lang:"ja",lvl:"N3",forma:"Haiku",titulo:"古池や",autor:"Matsuo Bashō",ano:"1686",
+contexto:"Haiku em 5-7-5 moras. O som da água mostra, por contraste, o silêncio do lugar.",
+versos:[["古池や","ふるいけや","Ah, um velho lago —"],["蛙飛び込む","かわず とびこむ","uma rã salta dentro:"],["水の音","みずの おと","o som da água."]],
+notas:[["や","Kireji (palavra de corte): faz uma pausa e dá ênfase, como um travessão."],["蛙 (かわず)","Leitura clássica de rã; hoje se diz かえる. É o kigo (palavra de estação): primavera."],["飛び込む (とびこむ)","Pular para dentro. 飛ぶ (pular) + 込む (para dentro)."]],
+perguntas:[["Qual é o kigo (palavra de estação) e que estação indica?","蛙 (かわず): primavera","古池: inverno","水の音: verão","飛び込む: outono"]]},
+
+{id:"p-ja-shizukasa",lang:"ja",lvl:"N3",forma:"Haiku",titulo:"閑さや",autor:"Matsuo Bashō",ano:"1689",
+contexto:"Escrito no templo Risshaku-ji (Yamadera), na viagem narrada em 奥の細道 (おくのほそみち).",
+versos:[["閑さや","しずかさや","Que silêncio —"],["岩にしみ入る","いわに しみいる","penetrando nas rochas,"],["蝉の声","せみの こえ","o canto das cigarras."]],
+notas:[["閑さ (しずかさ)","Mesmo sentido de 静かさ: silêncio, quietude."],["しみ入る (しみいる)","Infiltrar-se, entranhar. Hoje é mais comum しみ込む (しみこむ)."],["蝉 (せみ)","Cigarra. Kigo de verão."]],
+perguntas:[["O que \"penetra nas rochas\"?","O canto das cigarras","A chuva de verão","O som do sino","O vento da montanha"]]},
+
+{id:"p-ja-natsukusa",lang:"ja",lvl:"N3",forma:"Haiku",titulo:"夏草や",autor:"Matsuo Bashō",ano:"1689",
+contexto:"Em Hiraizumi, campo onde guerreiros morreram séculos antes. Também de 奥の細道 (おくのほそみち).",
+versos:[["夏草や","なつくさや","Capim de verão —"],["兵どもが","つわものどもが","dos guerreiros"],["夢の跡","ゆめの あと","o que restou dos sonhos."]],
+notas:[["兵 (つわもの)","Guerreiro, soldado (leitura antiga)."],["ども","Sufixo de plural, aqui com tom de distância."],["跡 (あと)","Vestígio, ruína. 足跡 (あしあと) = pegada."]],
+perguntas:[["O que o capim de verão cobre?","O lugar onde guerreiros lutaram e sonharam","Um jardim de templo","O túmulo do próprio poeta","Um campo de arroz recém-plantado"]]},
+
+{id:"p-ja-nanohana",lang:"ja",lvl:"N3",forma:"Haiku",titulo:"菜の花や",autor:"Yosa Buson",ano:"1774",
+contexto:"Buson era pintor e poeta: o haiku é um quadro do campo amarelo entre a lua e o sol.",
+versos:[["菜の花や","なのはなや","Flores de colza —"],["月は東に","つきは ひがしに","a lua no leste,"],["日は西に","ひは にしに","o sol no oeste."]],
+notas:[["菜の花 (なのはな)","Flor de colza, amarela. Kigo de primavera."],["日 (ひ)","Aqui é o sol, não o dia."],["(verbo omitido)","Depois de に falta ある/出る. Cortar o verbo é típico do haiku."]],
+perguntas:[["Que momento do dia o haiku mostra?","Fim de tarde: a lua nasce e o sol se põe","Meio-dia de sol forte","Madrugada sem lua","Uma noite de chuva"]]},
+
+{id:"p-ja-yasegaeru",lang:"ja",lvl:"N3",forma:"Haiku",titulo:"やせ蛙",autor:"Kobayashi Issa",ano:"1816",
+contexto:"Vendo rãs brigarem na primavera, Issa torce pela mais fraca.",
+versos:[["やせ蛙","やせがえる","Rãzinha magra,"],["まけるな一茶","まけるな いっさ","não perca! Issa"],["これにあり","これに あり","está aqui."]],
+notas:[["まけるな","負けるな (まけるな): imperativo negativo com 〜な. Ex.: 走るな (はしるな) = não corra."],["これにあり","Clássico para ここにいる (estou aqui)."],["やせ","De やせる (emagrecer): magro."]],
+perguntas:[["Quem torce pela rã magra?","O próprio poeta, Issa","Uma criança da vila","Outra rã","Um monge do templo"]]},
+
+{id:"p-ja-kaki",lang:"ja",lvl:"N3",forma:"Haiku",titulo:"柿食へば",autor:"Masaoka Shiki",ano:"1895",
+contexto:"Shiki renovou o haiku moderno. Junta um gesto banal ao sino de um templo antigo de Nara.",
+versos:[["柿食へば","かき くえば","Ao comer um caqui,"],["鐘が鳴るなり","かねが なるなり","o sino toca —"],["法隆寺","ほうりゅうじ","templo Hōryū-ji."]],
+notas:[["食へば (くえば)","Grafia antiga: へ se lê え. 〜ば clássico aqui = \"quando / ao\"."],["なり","Clássico para です / である."],["柿 (かき)","Caqui. Kigo de outono."]],
+perguntas:[["O que acontece enquanto o poeta come o caqui?","O sino do templo toca","Começa a chover","Um monge o chama","As folhas caem no prato"]]},
+
+{id:"p-ja-hatarakedo",lang:"ja",lvl:"N3",forma:"Tanka",titulo:"はたらけど",autor:"Ishikawa Takuboku",ano:"1910",
+contexto:"Do livro 一握の砂 (いちあくのすな). Takuboku escrevia o tanka em três linhas, em linguagem quase moderna.",
+versos:[["はたらけど","はたらけど","Trabalho,"],["はたらけど猶わが生活楽にならざり","はたらけど なお わが くらし らくに ならざり","trabalho, e mesmo assim minha vida não fica mais fácil;"],["ぢつと手を見る","じっと てを みる","fico olhando fixo para as mãos."]],
+notas:[["〜けど","Mesmo que / embora. Igual ao moderno."],["猶 (なお)","Ainda, mesmo assim."],["生活 (くらし)","O autor pede a leitura くらし (vida, sustento), não せいかつ."],["ならざり","Negação clássica: = ならない."],["ぢつと","Grafia antiga de じっと: fixamente, sem se mexer."]],
+perguntas:[["Qual é o sentimento do poema?","Frustração: trabalha muito e a vida não melhora","Alegria pelo salário novo","Saudade da terra natal","Cansaço depois de uma festa"],["O que significa ならざり?","ならない (não fica)","なった (ficou)","なりたい (quer ficar)","なるだろう (vai ficar)"]]},
+
+{id:"p-ja-hananoiro",lang:"ja",lvl:"N2",forma:"Tanka",titulo:"花の色は",autor:"Ono no Komachi",ano:"séc. IX",
+contexto:"Poema 9 do 百人一首 (ひゃくにんいっしゅ). Tanka 5-7-5-7-7 com palavras de duplo sentido.",
+versos:[["花の色は","はなの いろは","A cor das flores"],["うつりにけりな","うつりにけりな","desbotou, ah,"],["いたづらに","いたずらに","em vão,"],["我が身世にふる","わがみ よに ふる","enquanto eu passava pelo mundo"],["ながめせしまに","ながめ せしまに","perdida em pensamentos, sob a longa chuva."]],
+notas:[["けりな","けり = passado clássico de \"percebi agora\"; な = exclamação."],["ふる","Duplo sentido (kakekotoba): 経る (ふる, passar o tempo) e 降る (ふる, chover)."],["ながめ","Duplo sentido: 眺め (contemplar, cismar) e 長雨 (ながあめ, chuva longa)."],["せし","し = passado clássico: せし = した."],["いたづらに","Grafia antiga de いたずらに: em vão."]],
+perguntas:[["Quais palavras têm duplo sentido?","ふる e ながめ","花 e 色","我が身 e 世","うつり e いたづら"]]},
+
+{id:"p-ja-hatsukoi",lang:"ja",lvl:"N2",forma:"Poema (1ª estrofe)",titulo:"初恋",autor:"Shimazaki Tōson",ano:"1897",
+contexto:"Primeira estrofe de 初恋 (はつこい), do livro 若菜集 (わかなしゅう). Poesia moderna em ritmo 7-5.",
+versos:[["まだあげ初めし前髪の","まだ あげそめし まえがみの","A franja, que mal começavas a prender,"],["林檎のもとに見えしとき","りんごの もとに みえしとき","quando te vi junto à macieira,"],["前にさしたる花櫛の","まえに さしたる はなぐしの","e o pente de flores preso à frente,"],["花ある君と思ひけり","はな ある きみと おもいけり","pensei: és alguém em flor."]],
+notas:[["初めし (そめし)","〜初める = começar a; し = passado clássico: = 始めた."],["見えし (みえし)","= 見えた: quando apareceu / quando te vi."],["さしたる","= さしている: que estava preso (o pente)."],["思ひけり (おもいけり)","Grafia antiga ひ → い; けり = passado: = 思った."]],
+perguntas:[["Onde o poeta viu a moça?","Junto à macieira","Na estação de trem","No templo","À beira do rio"]]},
+
+{id:"p-de-nachtlied",lang:"de",lvl:"A2",forma:"Lied",titulo:"Wandrers Nachtlied",autor:"Johann Wolfgang von Goethe",ano:"1780",
+contexto:"Escrito a lápis na parede de uma cabana de caça no monte Kickelhahn, perto de Ilmenau.",
+versos:[["Über allen Gipfeln","","Sobre todos os cumes"],["Ist Ruh,","","há calma;"],["In allen Wipfeln","","em todas as copas"],["Spürest du","","você sente"],["Kaum einen Hauch;","","quase nenhum sopro;"],["Die Vögelein schweigen im Walde.","","os passarinhos calam no bosque."],["Warte nur, balde","","Espere só: logo"],["Ruhest du auch.","","você também descansa."]],
+quebras:[5],
+notas:[["Ruh","= Ruhe. O -e cai pela métrica."],["Gipfel / Wipfel","Cume / copa da árvore. A rima liga a montanha às árvores."],["spürest, ruhest","Formas antigas de spürst, ruhst."],["Vögelein","Diminutivo antigo de Vogel (= Vöglein)."],["balde","= bald (logo). O -e entra pela rima com Walde."]],
+perguntas:[["O que o último verso sugere?","Que quem lê também vai encontrar repouso (talvez a morte)","Que vai chover em breve","Que os pássaros vão voltar a cantar","Que é hora de acordar"]]},
+
+{id:"p-de-heidenroeslein",lang:"de",lvl:"A2",forma:"Lied (1ª estrofe)",titulo:"Heidenröslein",autor:"Johann Wolfgang von Goethe",ano:"1771",
+contexto:"Imita a canção popular. Schubert musicou em 1815.",
+versos:[["Sah ein Knab' ein Röslein stehn,","","Um menino viu uma rosinha,"],["Röslein auf der Heiden,","","rosinha na charneca;"],["War so jung und morgenschön,","","era tão jovem e bela como a manhã,"],["Lief er schnell, es nah zu sehn,","","ele correu para vê-la de perto,"],["Sah's mit vielen Freuden.","","olhou-a com muita alegria."],["Röslein, Röslein, Röslein rot,","","Rosinha, rosinha, rosinha vermelha,"],["Röslein auf der Heiden.","","rosinha na charneca."]],
+quebras:[5],
+notas:[["Knab'","= Knabe: menino (antigo)."],["Röslein","Rose + -lein: diminutivo, como -chen. Neutro: das Röslein (por isso \"es\")."],["stehn, sehn","= stehen, sehen, encurtados pelo ritmo."],["Heiden","= Heide (charneca), com -n do dativo antigo."],["Sah's","= sah es."],["Lief er","Verbo antes do sujeito: estilo de canção popular."]],
+perguntas:[["O que o menino fez ao ver a rosa?","Correu para vê-la de perto","Colheu e levou para casa","Passou sem olhar","Chamou a mãe"]]},
+
+{id:"p-de-fichtenbaum",lang:"de",lvl:"B1",forma:"Poema",titulo:"Ein Fichtenbaum steht einsam",autor:"Heinrich Heine",ano:"1827",
+contexto:"Do Buch der Lieder. Duas árvores separadas pelo mundo, cada uma sozinha.",
+versos:[["Ein Fichtenbaum steht einsam","","Um abeto está sozinho"],["Im Norden auf kahler Höh'.","","no norte, numa altura nua."],["Ihn schläfert; mit weißer Decke","","Ele sente sono; com um manto branco"],["Umhüllen ihn Eis und Schnee.","","o gelo e a neve o envolvem."],["Er träumt von einer Palme,","","Ele sonha com uma palmeira"],["Die, fern im Morgenland,","","que, longe, no Oriente,"],["Einsam und schweigend trauert","","sozinha e calada, está de luto"],["Auf brennender Felsenwand.","","sobre um penhasco ardente."]],
+quebras:[4],
+notas:[["Ihn schläfert","Verbo impessoal com acusativo: \"ele está com sono\"."],["Umhüllen ihn Eis und Schnee","Sujeito (Eis und Schnee) depois do verbo: inversão poética."],["Höh'","= Höhe: altura."],["Morgenland","Oriente (literalmente \"terra da manhã\")."],["trauern","Estar de luto, entristecer-se."]],
+perguntas:[["Com o que o abeto sonha?","Com uma palmeira no Oriente","Com a primavera","Com outro abeto","Com o mar do norte"],["O que os dois têm em comum?","Os dois estão sozinhos","Os dois estão no norte","Os dois estão cobertos de neve","Os dois estão felizes"]]},
+
+{id:"p-de-wuenschelrute",lang:"de",lvl:"B1",forma:"Poema",titulo:"Wünschelrute",autor:"Joseph von Eichendorff",ano:"1835",
+contexto:"Para Eichendorff, a natureza esconde uma canção de Deus que a palavra certa desperta.",
+versos:[["Schläft ein Lied in allen Dingen,","","Dorme uma canção em todas as coisas"],["Die da träumen fort und fort,","","que sonham sem parar,"],["Und die Welt hebt an zu singen,","","e o mundo começa a cantar,"],["Triffst du nur das Zauberwort.","","se você acerta a palavra mágica."]],
+notas:[["Schläft ein Lied","= Es schläft ein Lied: verbo no início, tom poético."],["fort und fort","Sem parar, continuamente."],["hebt an","De anheben (começar), verbo separável, hoje literário."],["Triffst du nur…","Condicional sem wenn: verbo no início = Wenn du nur das Zauberwort triffst."],["Wünschelrute","Varinha de rabdomante, que \"encontra\" água escondida."]],
+perguntas:[["O que faz o mundo cantar?","Acertar a palavra mágica","O nascer do sol","O silêncio da noite","Uma canção popular"]]},
+
+{id:"p-de-mondnacht",lang:"de",lvl:"B1",forma:"Poema",titulo:"Mondnacht",autor:"Joseph von Eichendorff",ano:"1837",
+contexto:"Schumann musicou no Liederkreis op. 39. A alma voa \"para casa\": o céu como lar.",
+versos:[["Es war, als hätt' der Himmel","","Era como se o céu"],["Die Erde still geküßt,","","tivesse beijado a terra em silêncio,"],["Daß sie im Blütenschimmer","","de modo que ela, no brilho das flores,"],["Von ihm nur träumen müßt'.","","só pudesse sonhar com ele."],["Die Luft ging durch die Felder,","","O ar passava pelos campos,"],["Die Ähren wogten sacht,","","as espigas ondulavam de leve,"],["Es rauschten leis die Wälder,","","os bosques sussurravam baixinho,"],["So sternklar war die Nacht.","","tão estrelada era a noite."],["Und meine Seele spannte","","E minha alma estendeu"],["Weit ihre Flügel aus,","","bem longe as suas asas,"],["Flog durch die stillen Lande,","","voou pelas terras silenciosas"],["Als flöge sie nach Haus.","","como se voasse para casa."]],
+quebras:[4,8],
+notas:[["als hätt'","= als hätte: Konjunktiv II, \"como se tivesse\"."],["geküßt, Daß, müßt'","Grafia antiga de geküsst, dass, müsste."],["sacht, leis","Suavemente; = leise (baixinho)."],["spannte … aus","Verbo separável ausspannen: estender, abrir."],["als flöge sie","Konjunktiv II de fliegen: \"como se voasse\"."],["Lande","Plural poético de Land."]],
+perguntas:[["Para onde a alma parece voar?","Para casa","Para o mar","Para o passado","Para a cidade"],["Que forma verbal aparece em \"als hätt'\" e \"als flöge\"?","Konjunktiv II (como se…)","Imperativo","Futur I","Passiv"]]},
+
+{id:"p-de-herbsttag",lang:"de",lvl:"B2",forma:"Poema",titulo:"Herbsttag",autor:"Rainer Maria Rilke",ano:"1902",
+contexto:"Do Buch der Bilder. Uma oração a Deus no fim do verão.",
+versos:[["Herr: es ist Zeit. Der Sommer war sehr groß.","","Senhor: é hora. O verão foi imenso."],["Leg deinen Schatten auf die Sonnenuhren,","","Põe tua sombra sobre os relógios de sol"],["und auf den Fluren laß die Winde los.","","e solta os ventos sobre os campos."],["Befiehl den letzten Früchten voll zu sein;","","Ordena aos últimos frutos que fiquem plenos;"],["gib ihnen noch zwei südlichere Tage,","","dá-lhes mais dois dias de sol do sul,"],["dränge sie zur Vollendung hin und jage","","impele-os à perfeição e lança"],["die letzte Süße in den schweren Wein.","","a última doçura no vinho pesado."],["Wer jetzt kein Haus hat, baut sich keines mehr.","","Quem agora não tem casa não construirá mais nenhuma."],["Wer jetzt allein ist, wird es lange bleiben,","","Quem agora está só assim ficará por muito tempo,"],["wird wachen, lesen, lange Briefe schreiben","","vai velar, ler, escrever longas cartas"],["und wird in den Alleen hin und her","","e pelas alamedas, de um lado a outro,"],["unruhig wandern, wenn die Blätter treiben.","","vai vagar inquieto, quando as folhas voarem."]],
+quebras:[3,7],
+notas:[["Leg, laß, befiehl, gib, dränge, jage","Imperativo de du. laß = lass (grafia antiga)."],["befehlen + dativo","Befiehl den letzten Früchten: ordenar a alguém (dativo)."],["keines","Pronome: \"nenhuma\" (casa). Ein Haus → keins/keines."],["wird … bleiben / wachen / wandern","Futur I: werden + infinitivo."],["hin und her","De um lado para o outro."],["treiben","Aqui: ser levado pelo vento."]],
+perguntas:[["Com quem o poeta fala no primeiro verso?","Com Deus","Com o verão","Com um amigo","Com o leitor"],["O que acontece com quem está sozinho agora?","Vai continuar só por muito tempo","Vai encontrar companhia no inverno","Vai construir uma casa","Vai viajar para o sul"]]}
+];
+
 </script>
 <script>
 (function(){
@@ -6935,7 +7051,7 @@ function renderPraticar(){
   box.innerHTML="";
   box.append(h("div",{class:"sechead"}, h("h1",{text:"Praticar"}), h("span",{class:"jp",text:"稽古"})));
   const bar=h("div",{class:"segctl",role:"tablist","aria-label":"Praticar"});
-  [["leitura","Leitura"],["escuta","Escuta"],["trajeto","Trajeto"],["conversa","Conversa"]].forEach(([k,t])=>bar.append(h("button",{type:"button",role:"tab","aria-selected":String(praticarSeg===k),text:t,onclick:()=>{ praticarSeg=k; renderPraticar(); }})));
+  [["leitura","Leitura"],["poemas","Poemas"],["escuta","Escuta"],["trajeto","Trajeto"],["conversa","Conversa"]].forEach(([k,t])=>bar.append(h("button",{type:"button",role:"tab","aria-selected":String(praticarSeg===k),text:t,onclick:()=>{ praticarSeg=k; renderPraticar(); }})));
   box.append(bar);
   const key=l+"-"+praticarSeg+"-"+(aiReady()?1:0);
   if(!praticarCache[key]){
@@ -6950,11 +7066,156 @@ function renderPraticar(){
         h("button",{class:"btn primary",type:"button",text:"Começar",onclick:start})), run);
       praticarCache[key]=w;
     }
+    else if(praticarSeg==="poemas") praticarCache[key]=poemsView(l);
     else praticarCache[key]=trajetoView(l);
   }
   box.append(praticarCache[key]);
 }
 aiHooks.push(()=>{ if(tab==="praticar") renderPraticar(); });
+
+/* =========================================================
+   Poemas: ler, ouvir, decorar, ordenar e entender
+   ========================================================= */
+const POEMS={ja:[],de:[]}; (window.LM_POEM||[]).forEach(p=>{ if(POEMS[p.lang]) POEMS[p.lang].push(p); });
+function poemSay(l, v){ return l==="ja" ? String(v[1]||v[0]).replace(/\s+/g,"") : clean(v[0]); }
+function poemLog(l){ const pf=store.perfil[l]; if(!pf.poemas) pf.poemas={}; return pf.poemas; }
+function poemMark(l, p, k, val){ const g=poemLog(l); g[p.id]=Object.assign({}, g[p.id]||{}, {[k]:val, data:TODAY}); savePerfil(l); }
+function poemPlayAll(l, p, rate){ return speakSeq(p.versos.map(v=>({text:poemSay(l,v), l, rate:rate||0.8, gap:l==="ja"?900:600}))); }
+function poemFace(l, p){
+  const face=h("div",{class:"poem-face "+(l==="ja"?"tate":"yoko"),lang:l});
+  p.versos.forEach((v,i)=>{ face.append(h("span",{class:"pv",text:v[0]})); if((p.quebras||[]).includes(i+1)) face.append(h("span",{class:"pgap","aria-hidden":"true"})); });
+  return h("div",{class:"poem-wrap"}, face);
+}
+function poemsView(l){
+  const wrap=h("div",{class:"stack"}), area=h("div",{class:"stack"}), list=h("div",{class:"textlist"});
+  const log=poemLog(l);
+  POEMS[l].forEach(p=>{ const g=log[p.id]||{};
+    list.append(h("button",{type:"button",onclick:()=>{ area.innerHTML=""; area.append(poemView(l,p,()=>{ area.innerHTML=""; window.scrollTo(0,0); })); reveal(area.firstChild); }},
+      h("span",{class:"row"}, h("span",{class:"chip",text:p.lvl}), g.decorado ? h("span",{class:"chip s6",text:"✓ decorado"}) : g.lido ? h("span",{class:"chip s2",text:"lido"}) : null),
+      h("span",{class:"tt",lang:l,text:p.titulo}), h("span",{class:"small muted",text:p.forma+" · "+p.autor+", "+p.ano})));
+  });
+  wrap.append(h("div",{class:"card stack"}, h("h3",{text:"Poemas"}),
+    h("p",{class:"small muted",text: l==="ja"
+      ? "Haiku, tanka e poesia clássica com leitura em kana, tradução e notas de gramática clássica. Ouça, leia, decore e coloque os versos em ordem."
+      : "Poesia alemã clássica e romântica com tradução e notas. Ouça, leia, decore e coloque os versos em ordem."}), list), area);
+  return wrap;
+}
+function poemView(l, p, after){
+  const out=h("div",{class:"stack"}), seg=h("div",{class:"segctl",role:"tablist","aria-label":"Estudo do poema"}), body=h("div",{class:"stack"});
+  let mode="ler";
+  const quiet=()=>{ try{ speechSynthesis.cancel(); }catch(e){} };
+  const modes=[["ler","Ler"],["decorar","Decorar"],["ordenar","Ordenar"]];
+  if(p.perguntas && p.perguntas.length) modes.push(["entender","Entender"]);
+  const draw=()=>{ quiet(); body.innerHTML="";
+    seg.querySelectorAll("button").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.m===mode)));
+    body.append(mode==="ler" ? poemRead(l,p) : mode==="decorar" ? poemMemo(l,p) : mode==="ordenar" ? poemOrder(l,p) : poemQuiz(l,p));
+  };
+  modes.forEach(([k,t])=>seg.append(h("button",{type:"button",role:"tab","data-m":k,text:t,onclick:()=>{ mode=k; draw(); }})));
+  out.append(h("div",{class:"card stack"},
+      h("div",{class:"row"}, h("span",{class:"chip",text:p.forma}), h("span",{class:"small muted",text:p.autor+", "+p.ano}), h("span",{class:"spacer"}),
+        after ? h("button",{class:"linkbtn",type:"button",text:"fechar",onclick:()=>{ quiet(); after(); }}) : null),
+      h("h2",{lang:l,text:p.titulo}), poemFace(l,p), p.contexto ? h("p",{class:"small tip",text:p.contexto}) : null),
+    seg, body);
+  draw();
+  return out;
+}
+function poemRead(l, p){
+  const card=h("div",{class:"card stack"}), body=h("div",{class:"hide-pt"});
+  let stop=null;
+  const playAll=h("button",{class:"btn small primary",type:"button",text:"▶ Poema todo",onclick:()=>{ stop&&stop(); stop=poemPlayAll(l,p,0.8); }});
+  p.versos.forEach(v=>{ const t=poemSay(l,v);
+    body.append(h("div",{class:"ex"},
+      h("span",{class:"row",style:"gap:6px;flex-wrap:nowrap"}, iconBtn("play","Ouvir",()=>speak(t,l,{rate:0.9})), iconBtn("slow","Ouvir devagar",()=>speak(t,l,{rate:0.65}))),
+      h("div",{}, h("div",{class:"jp",lang:l,text:v[0]}), l==="ja"&&v[1] ? h("div",{class:"kana",lang:"ja",text:v[1]}) : null, h("div",{class:"pt",text:v[2]})))); });
+  const tg=h("div",{class:"toggles"},
+    l==="ja" ? h("label",{}, h("input",{type:"checkbox",id:"pm-kana-"+p.id,checked:true,onchange:e=>body.classList.toggle("hide-kana",!e.target.checked)}),"Kana") : null,
+    h("label",{}, h("input",{type:"checkbox",id:"pm-pt-"+p.id,onchange:e=>body.classList.toggle("hide-pt",!e.target.checked)}),"Tradução"));
+  const done=h("button",{class:"btn",type:"button",text:"Marcar como lido"});
+  const isRead=()=>!!(poemLog(l)[p.id]||{}).lido;
+  if(isRead()){ done.disabled=true; done.textContent="Lido"; }
+  done.addEventListener("click",()=>{ if(!isRead()){ addDay(l,{leit:1, xp:10}); poemMark(l,p,"lido",true); } done.disabled=true; done.textContent="Lido"; });
+  card.append(h("div",{class:"row"}, playAll, h("span",{class:"spacer"}), tg),
+    h("p",{class:"small muted",text:"Leia primeiro sem tradução. Ouça cada verso e repita em voz alta, no ritmo do áudio."}), body,
+    (p.notas&&p.notas.length) ? h("div",{class:"stack"}, h("h3",{text:"Notas"}), p.notas.map(n=>h("div",{class:"pnote"}, h("b",{lang:l,text:n[0]}), h("span",{text:n[1]})))) : null,
+    h("div",{class:"row"}, done));
+  const wrap=h("div",{class:"stack"}, card);
+  if(aiReady()) wrap.append(poemAsk(l,p));
+  return wrap;
+}
+function poemAsk(l, p){
+  const a=h("textarea",{id:"pmq-"+p.id,rows:"2",placeholder: l==="ja" ? "Ex.: por que けり e não た? Como ficaria em japonês moderno?" : "Ex.: por que hätt' e não hat? Como ficaria em alemão moderno?"});
+  const ans=h("div",{class:"answer",hidden:true}), send=h("button",{class:"btn small",type:"button",text:"Perguntar"});
+  send.addEventListener("click", async ()=>{
+    const q=a.value.trim(); if(!q) return; send.disabled=true; ans.hidden=false; ans.textContent="Pensando…";
+    const txt=p.versos.map(v=>v[0]).join("\n");
+    try{ await sampleFn(`Você é professor de ${LANGNAME[l]} de um aluno brasileiro, ${levelLine(l)}. Ele está estudando este poema (${p.titulo}, de ${p.autor}, ${p.ano}):\n${txt}\nPergunta do aluno: ${q}\nResponda em português, em até 6 frases, direto ao ponto. ${l==="ja"?"Todo exemplo em japonês vem com leitura em kana entre parênteses e tradução.":"Todo exemplo em alemão vem com tradução."}`,
+      {cache:false, onText:({text})=>{ ans.textContent=text; }}); }
+    catch(e){ ans.textContent=aiError(e)||""; }
+    send.disabled=false;
+  });
+  return h("div",{class:"card stack"}, h("h3",{text:"Perguntar ao professor sobre o poema"}), a, h("div",{class:"row"}, send), ans);
+}
+function poemMemo(l, p){
+  const card=h("div",{class:"card stack"});
+  const steps=["Leia o poema em voz alta duas vezes, junto com o áudio.",
+    "Metade de cada verso sumiu. Recite o poema todo; toque num verso só se travar.",
+    "Só sobrou o começo de cada verso. Recite de novo.",
+    "Agora de cor. Recite tudo e depois confira."];
+  let r=0, stop=null;
+  const hint=(t,lv)=>{ if(lv===0) return t; if(lv===3) return "";
+    if(l==="de"){ const w=t.split(" "); return w.slice(0, lv===1 ? Math.ceil(w.length/2) : 1).join(" "); }
+    const ch=[...t]; return ch.slice(0, lv===1 ? Math.ceil(ch.length/2) : Math.min(2,ch.length)).join(""); };
+  const listen=()=>h("button",{class:"btn small",type:"button",text:"▶ Ouvir",onclick:()=>{ stop&&stop(); stop=poemPlayAll(l,p,0.8); }});
+  const draw=()=>{ card.innerHTML="";
+    const list=h("div",{class:"memo",lang:l});
+    p.versos.forEach((v,i)=>{ const hv=hint(v[0],r), full=hv===v[0];
+      const line=h("button",{type:"button",class:"mline"+(full?" full":""),disabled:full||null,"aria-label":full?null:"Mostrar verso "+(i+1)}, h("span",{text:hv}), full ? null : h("span",{class:"mgap",text:"……"}));
+      if(!full) line.addEventListener("click",()=>{ line.replaceChildren(h("span",{text:v[0]})); line.classList.add("peek"); line.disabled=true; });
+      list.append(line);
+      if((p.quebras||[]).includes(i+1)) list.append(h("div",{class:"pgap-h"}));
+    });
+    card.append(h("div",{class:"row"}, h("span",{class:"chip s2",text:"Etapa "+(r+1)+" de 4"}), h("span",{class:"spacer"}), listen()),
+      h("p",{text:steps[r]}), list,
+      h("div",{class:"row"}, h("button",{class:"btn primary",type:"button",text: r<3 ? "Próxima etapa" : "Conferir",onclick:()=>{ stop&&stop(); if(r<3){ r++; draw(); } else finish(); }})));
+  };
+  const finish=()=>{ card.innerHTML="";
+    const list=h("div",{class:"memo",lang:l}); p.versos.forEach(v=>list.append(h("div",{class:"mline full",text:v[0]})));
+    card.append(h("h3",{text:"Confira"}), list, h("p",{class:"small muted",text:"Recitou tudo sem travar?"}),
+      h("div",{class:"row"},
+        h("button",{class:"btn primary",type:"button",text:"Sim, decorei",onclick:()=>{
+          eloUpdate(l,"speaking",DIFF[p.lvl]||250,true,"poema"); if(S) S.stats.ok++; addDay(l,{ok:1, xp:20}); poemMark(l,p,"decorado",true);
+          card.innerHTML=""; card.append(h("p",{text:"Poema decorado. Recite de novo amanhã, sem olhar, para fixar."}), listen()); }}),
+        h("button",{class:"btn",type:"button",text:"Ainda não",onclick:()=>{ addDay(l,{xp:5}); r=1; draw(); }})));
+  };
+  draw();
+  return card;
+}
+function poemOrder(l, p){
+  const card=h("div",{class:"card stack"});
+  const start=()=>{ card.innerHTML="";
+    const n=p.versos.length, picked=[], ans=h("div",{class:"memo",lang:l}), pool=h("div",{class:"stack",lang:l});
+    let order=shuffle(p.versos.map((_,i)=>i)), errs=0;
+    for(let k=0; n>1 && k<5 && order.every((x,i)=>x===i); k++) order=shuffle(order);
+    const end=()=>{ const ok=errs===0;
+      eloUpdate(l,"leitura",DIFF[p.lvl]||250,ok,"poema"); if(S) S.stats[ok?"ok":"no"]++; addDay(l,{[ok?"ok":"no"]:1, xp: ok?12:4});
+      card.append(h("p",{text: ok ? "Ordem perfeita." : "Concluído com "+errs+" erro(s)."}), h("div",{class:"row"}, h("button",{class:"btn",type:"button",text:"De novo",onclick:start}))); };
+    order.forEach(i=>{ const b=h("button",{type:"button",class:"opt",text:p.versos[i][0]});
+      b.addEventListener("click",()=>{ const want=picked.length;
+        if(i===want || p.versos[i][0]===p.versos[want][0]){ picked.push(i); b.remove(); ans.append(h("div",{class:"mline full",text:p.versos[want][0]})); speak(poemSay(l,p.versos[want]),l,{rate:0.9}); if(picked.length===n) end(); }
+        else { errs++; b.classList.add("wrong"); setTimeout(()=>b.classList.remove("wrong"),600); } });
+      pool.append(b); });
+    card.append(h("p",{text:"Toque nos versos na ordem do poema."}), ans, pool);
+  };
+  start();
+  return card;
+}
+function poemQuiz(l, p){
+  const out=h("div",{class:"stack"}); let n=0, right=0;
+  p.perguntas.forEach(q=>out.append(compQuestion(l,q,ok=>{ n++; if(ok) right++;
+    eloUpdate(l,"leitura",DIFF[p.lvl]||250,ok,"poema"); if(S) S.stats[ok?"ok":"no"]++; addDay(l,{[ok?"ok":"no"]:1, xp: ok?8:2});
+    if(n===p.perguntas.length) out.append(h("p",{class:"small",text:right+" de "+n+" certas."})); })));
+  return out;
+}
 
 /* =========================================================
    Aba Revisar

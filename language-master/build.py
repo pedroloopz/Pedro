@@ -3,7 +3,7 @@
 import pathlib
 ROOT = pathlib.Path(__file__).parent
 DATA = ["ja-n3.js","ja-n2a.js","ja-n2b.js","ja-n2c.js","ja-n2d.js","de-a2b1.js","de-b2.js",
-        "vocab-ja.js","vocab-ja2.js","kanji-ja.js","kanji-ja2.js","vocab-de.js","vocab-de2.js","readings.js"]
+        "vocab-ja.js","vocab-ja2.js","kanji-ja.js","kanji-ja2.js","vocab-de.js","vocab-de2.js","readings.js","poems.js"]
 head = (ROOT/"src/head.html").read_text(encoding="utf8")
 data = "\n".join((ROOT/"src/data"/f).read_text(encoding="utf8") for f in DATA)
 app = (ROOT/"src/app.js").read_text(encoding="utf8")

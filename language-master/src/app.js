@@ -2528,7 +2528,7 @@ function renderPraticar(){
   box.innerHTML="";
   box.append(h("div",{class:"sechead"}, h("h1",{text:"Praticar"}), h("span",{class:"jp",text:"稽古"})));
   const bar=h("div",{class:"segctl",role:"tablist","aria-label":"Praticar"});
-  [["leitura","Leitura"],["escuta","Escuta"],["trajeto","Trajeto"],["conversa","Conversa"]].forEach(([k,t])=>bar.append(h("button",{type:"button",role:"tab","aria-selected":String(praticarSeg===k),text:t,onclick:()=>{ praticarSeg=k; renderPraticar(); }})));
+  [["leitura","Leitura"],["poemas","Poemas"],["escuta","Escuta"],["trajeto","Trajeto"],["conversa","Conversa"]].forEach(([k,t])=>bar.append(h("button",{type:"button",role:"tab","aria-selected":String(praticarSeg===k),text:t,onclick:()=>{ praticarSeg=k; renderPraticar(); }})));
   box.append(bar);
   const key=l+"-"+praticarSeg+"-"+(aiReady()?1:0);
   if(!praticarCache[key]){
@@ -2543,11 +2543,156 @@ function renderPraticar(){
         h("button",{class:"btn primary",type:"button",text:"Começar",onclick:start})), run);
       praticarCache[key]=w;
     }
+    else if(praticarSeg==="poemas") praticarCache[key]=poemsView(l);
     else praticarCache[key]=trajetoView(l);
   }
   box.append(praticarCache[key]);
 }
 aiHooks.push(()=>{ if(tab==="praticar") renderPraticar(); });
+
+/* =========================================================
+   Poemas: ler, ouvir, decorar, ordenar e entender
+   ========================================================= */
+const POEMS={ja:[],de:[]}; (window.LM_POEM||[]).forEach(p=>{ if(POEMS[p.lang]) POEMS[p.lang].push(p); });
+function poemSay(l, v){ return l==="ja" ? String(v[1]||v[0]).replace(/\s+/g,"") : clean(v[0]); }
+function poemLog(l){ const pf=store.perfil[l]; if(!pf.poemas) pf.poemas={}; return pf.poemas; }
+function poemMark(l, p, k, val){ const g=poemLog(l); g[p.id]=Object.assign({}, g[p.id]||{}, {[k]:val, data:TODAY}); savePerfil(l); }
+function poemPlayAll(l, p, rate){ return speakSeq(p.versos.map(v=>({text:poemSay(l,v), l, rate:rate||0.8, gap:l==="ja"?900:600}))); }
+function poemFace(l, p){
+  const face=h("div",{class:"poem-face "+(l==="ja"?"tate":"yoko"),lang:l});
+  p.versos.forEach((v,i)=>{ face.append(h("span",{class:"pv",text:v[0]})); if((p.quebras||[]).includes(i+1)) face.append(h("span",{class:"pgap","aria-hidden":"true"})); });
+  return h("div",{class:"poem-wrap"}, face);
+}
+function poemsView(l){
+  const wrap=h("div",{class:"stack"}), area=h("div",{class:"stack"}), list=h("div",{class:"textlist"});
+  const log=poemLog(l);
+  POEMS[l].forEach(p=>{ const g=log[p.id]||{};
+    list.append(h("button",{type:"button",onclick:()=>{ area.innerHTML=""; area.append(poemView(l,p,()=>{ area.innerHTML=""; window.scrollTo(0,0); })); reveal(area.firstChild); }},
+      h("span",{class:"row"}, h("span",{class:"chip",text:p.lvl}), g.decorado ? h("span",{class:"chip s6",text:"✓ decorado"}) : g.lido ? h("span",{class:"chip s2",text:"lido"}) : null),
+      h("span",{class:"tt",lang:l,text:p.titulo}), h("span",{class:"small muted",text:p.forma+" · "+p.autor+", "+p.ano})));
+  });
+  wrap.append(h("div",{class:"card stack"}, h("h3",{text:"Poemas"}),
+    h("p",{class:"small muted",text: l==="ja"
+      ? "Haiku, tanka e poesia clássica com leitura em kana, tradução e notas de gramática clássica. Ouça, leia, decore e coloque os versos em ordem."
+      : "Poesia alemã clássica e romântica com tradução e notas. Ouça, leia, decore e coloque os versos em ordem."}), list), area);
+  return wrap;
+}
+function poemView(l, p, after){
+  const out=h("div",{class:"stack"}), seg=h("div",{class:"segctl",role:"tablist","aria-label":"Estudo do poema"}), body=h("div",{class:"stack"});
+  let mode="ler";
+  const quiet=()=>{ try{ speechSynthesis.cancel(); }catch(e){} };
+  const modes=[["ler","Ler"],["decorar","Decorar"],["ordenar","Ordenar"]];
+  if(p.perguntas && p.perguntas.length) modes.push(["entender","Entender"]);
+  const draw=()=>{ quiet(); body.innerHTML="";
+    seg.querySelectorAll("button").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.m===mode)));
+    body.append(mode==="ler" ? poemRead(l,p) : mode==="decorar" ? poemMemo(l,p) : mode==="ordenar" ? poemOrder(l,p) : poemQuiz(l,p));
+  };
+  modes.forEach(([k,t])=>seg.append(h("button",{type:"button",role:"tab","data-m":k,text:t,onclick:()=>{ mode=k; draw(); }})));
+  out.append(h("div",{class:"card stack"},
+      h("div",{class:"row"}, h("span",{class:"chip",text:p.forma}), h("span",{class:"small muted",text:p.autor+", "+p.ano}), h("span",{class:"spacer"}),
+        after ? h("button",{class:"linkbtn",type:"button",text:"fechar",onclick:()=>{ quiet(); after(); }}) : null),
+      h("h2",{lang:l,text:p.titulo}), poemFace(l,p), p.contexto ? h("p",{class:"small tip",text:p.contexto}) : null),
+    seg, body);
+  draw();
+  return out;
+}
+function poemRead(l, p){
+  const card=h("div",{class:"card stack"}), body=h("div",{class:"hide-pt"});
+  let stop=null;
+  const playAll=h("button",{class:"btn small primary",type:"button",text:"▶ Poema todo",onclick:()=>{ stop&&stop(); stop=poemPlayAll(l,p,0.8); }});
+  p.versos.forEach(v=>{ const t=poemSay(l,v);
+    body.append(h("div",{class:"ex"},
+      h("span",{class:"row",style:"gap:6px;flex-wrap:nowrap"}, iconBtn("play","Ouvir",()=>speak(t,l,{rate:0.9})), iconBtn("slow","Ouvir devagar",()=>speak(t,l,{rate:0.65}))),
+      h("div",{}, h("div",{class:"jp",lang:l,text:v[0]}), l==="ja"&&v[1] ? h("div",{class:"kana",lang:"ja",text:v[1]}) : null, h("div",{class:"pt",text:v[2]})))); });
+  const tg=h("div",{class:"toggles"},
+    l==="ja" ? h("label",{}, h("input",{type:"checkbox",id:"pm-kana-"+p.id,checked:true,onchange:e=>body.classList.toggle("hide-kana",!e.target.checked)}),"Kana") : null,
+    h("label",{}, h("input",{type:"checkbox",id:"pm-pt-"+p.id,onchange:e=>body.classList.toggle("hide-pt",!e.target.checked)}),"Tradução"));
+  const done=h("button",{class:"btn",type:"button",text:"Marcar como lido"});
+  const isRead=()=>!!(poemLog(l)[p.id]||{}).lido;
+  if(isRead()){ done.disabled=true; done.textContent="Lido"; }
+  done.addEventListener("click",()=>{ if(!isRead()){ addDay(l,{leit:1, xp:10}); poemMark(l,p,"lido",true); } done.disabled=true; done.textContent="Lido"; });
+  card.append(h("div",{class:"row"}, playAll, h("span",{class:"spacer"}), tg),
+    h("p",{class:"small muted",text:"Leia primeiro sem tradução. Ouça cada verso e repita em voz alta, no ritmo do áudio."}), body,
+    (p.notas&&p.notas.length) ? h("div",{class:"stack"}, h("h3",{text:"Notas"}), p.notas.map(n=>h("div",{class:"pnote"}, h("b",{lang:l,text:n[0]}), h("span",{text:n[1]})))) : null,
+    h("div",{class:"row"}, done));
+  const wrap=h("div",{class:"stack"}, card);
+  if(aiReady()) wrap.append(poemAsk(l,p));
+  return wrap;
+}
+function poemAsk(l, p){
+  const a=h("textarea",{id:"pmq-"+p.id,rows:"2",placeholder: l==="ja" ? "Ex.: por que けり e não た? Como ficaria em japonês moderno?" : "Ex.: por que hätt' e não hat? Como ficaria em alemão moderno?"});
+  const ans=h("div",{class:"answer",hidden:true}), send=h("button",{class:"btn small",type:"button",text:"Perguntar"});
+  send.addEventListener("click", async ()=>{
+    const q=a.value.trim(); if(!q) return; send.disabled=true; ans.hidden=false; ans.textContent="Pensando…";
+    const txt=p.versos.map(v=>v[0]).join("\n");
+    try{ await sampleFn(`Você é professor de ${LANGNAME[l]} de um aluno brasileiro, ${levelLine(l)}. Ele está estudando este poema (${p.titulo}, de ${p.autor}, ${p.ano}):\n${txt}\nPergunta do aluno: ${q}\nResponda em português, em até 6 frases, direto ao ponto. ${l==="ja"?"Todo exemplo em japonês vem com leitura em kana entre parênteses e tradução.":"Todo exemplo em alemão vem com tradução."}`,
+      {cache:false, onText:({text})=>{ ans.textContent=text; }}); }
+    catch(e){ ans.textContent=aiError(e)||""; }
+    send.disabled=false;
+  });
+  return h("div",{class:"card stack"}, h("h3",{text:"Perguntar ao professor sobre o poema"}), a, h("div",{class:"row"}, send), ans);
+}
+function poemMemo(l, p){
+  const card=h("div",{class:"card stack"});
+  const steps=["Leia o poema em voz alta duas vezes, junto com o áudio.",
+    "Metade de cada verso sumiu. Recite o poema todo; toque num verso só se travar.",
+    "Só sobrou o começo de cada verso. Recite de novo.",
+    "Agora de cor. Recite tudo e depois confira."];
+  let r=0, stop=null;
+  const hint=(t,lv)=>{ if(lv===0) return t; if(lv===3) return "";
+    if(l==="de"){ const w=t.split(" "); return w.slice(0, lv===1 ? Math.ceil(w.length/2) : 1).join(" "); }
+    const ch=[...t]; return ch.slice(0, lv===1 ? Math.ceil(ch.length/2) : Math.min(2,ch.length)).join(""); };
+  const listen=()=>h("button",{class:"btn small",type:"button",text:"▶ Ouvir",onclick:()=>{ stop&&stop(); stop=poemPlayAll(l,p,0.8); }});
+  const draw=()=>{ card.innerHTML="";
+    const list=h("div",{class:"memo",lang:l});
+    p.versos.forEach((v,i)=>{ const hv=hint(v[0],r), full=hv===v[0];
+      const line=h("button",{type:"button",class:"mline"+(full?" full":""),disabled:full||null,"aria-label":full?null:"Mostrar verso "+(i+1)}, h("span",{text:hv}), full ? null : h("span",{class:"mgap",text:"……"}));
+      if(!full) line.addEventListener("click",()=>{ line.replaceChildren(h("span",{text:v[0]})); line.classList.add("peek"); line.disabled=true; });
+      list.append(line);
+      if((p.quebras||[]).includes(i+1)) list.append(h("div",{class:"pgap-h"}));
+    });
+    card.append(h("div",{class:"row"}, h("span",{class:"chip s2",text:"Etapa "+(r+1)+" de 4"}), h("span",{class:"spacer"}), listen()),
+      h("p",{text:steps[r]}), list,
+      h("div",{class:"row"}, h("button",{class:"btn primary",type:"button",text: r<3 ? "Próxima etapa" : "Conferir",onclick:()=>{ stop&&stop(); if(r<3){ r++; draw(); } else finish(); }})));
+  };
+  const finish=()=>{ card.innerHTML="";
+    const list=h("div",{class:"memo",lang:l}); p.versos.forEach(v=>list.append(h("div",{class:"mline full",text:v[0]})));
+    card.append(h("h3",{text:"Confira"}), list, h("p",{class:"small muted",text:"Recitou tudo sem travar?"}),
+      h("div",{class:"row"},
+        h("button",{class:"btn primary",type:"button",text:"Sim, decorei",onclick:()=>{
+          eloUpdate(l,"speaking",DIFF[p.lvl]||250,true,"poema"); if(S) S.stats.ok++; addDay(l,{ok:1, xp:20}); poemMark(l,p,"decorado",true);
+          card.innerHTML=""; card.append(h("p",{text:"Poema decorado. Recite de novo amanhã, sem olhar, para fixar."}), listen()); }}),
+        h("button",{class:"btn",type:"button",text:"Ainda não",onclick:()=>{ addDay(l,{xp:5}); r=1; draw(); }})));
+  };
+  draw();
+  return card;
+}
+function poemOrder(l, p){
+  const card=h("div",{class:"card stack"});
+  const start=()=>{ card.innerHTML="";
+    const n=p.versos.length, picked=[], ans=h("div",{class:"memo",lang:l}), pool=h("div",{class:"stack",lang:l});
+    let order=shuffle(p.versos.map((_,i)=>i)), errs=0;
+    for(let k=0; n>1 && k<5 && order.every((x,i)=>x===i); k++) order=shuffle(order);
+    const end=()=>{ const ok=errs===0;
+      eloUpdate(l,"leitura",DIFF[p.lvl]||250,ok,"poema"); if(S) S.stats[ok?"ok":"no"]++; addDay(l,{[ok?"ok":"no"]:1, xp: ok?12:4});
+      card.append(h("p",{text: ok ? "Ordem perfeita." : "Concluído com "+errs+" erro(s)."}), h("div",{class:"row"}, h("button",{class:"btn",type:"button",text:"De novo",onclick:start}))); };
+    order.forEach(i=>{ const b=h("button",{type:"button",class:"opt",text:p.versos[i][0]});
+      b.addEventListener("click",()=>{ const want=picked.length;
+        if(i===want || p.versos[i][0]===p.versos[want][0]){ picked.push(i); b.remove(); ans.append(h("div",{class:"mline full",text:p.versos[want][0]})); speak(poemSay(l,p.versos[want]),l,{rate:0.9}); if(picked.length===n) end(); }
+        else { errs++; b.classList.add("wrong"); setTimeout(()=>b.classList.remove("wrong"),600); } });
+      pool.append(b); });
+    card.append(h("p",{text:"Toque nos versos na ordem do poema."}), ans, pool);
+  };
+  start();
+  return card;
+}
+function poemQuiz(l, p){
+  const out=h("div",{class:"stack"}); let n=0, right=0;
+  p.perguntas.forEach(q=>out.append(compQuestion(l,q,ok=>{ n++; if(ok) right++;
+    eloUpdate(l,"leitura",DIFF[p.lvl]||250,ok,"poema"); if(S) S.stats[ok?"ok":"no"]++; addDay(l,{[ok?"ok":"no"]:1, xp: ok?8:2});
+    if(n===p.perguntas.length) out.append(h("p",{class:"small",text:right+" de "+n+" certas."})); })));
+  return out;
+}
 
 /* =========================================================
    Aba Revisar
