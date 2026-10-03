@@ -2393,7 +2393,7 @@ function renderWordTrack(box, l, seg){
   const gm=genMsg[l+"-"+seg];
   const st=h("div",{class:"status"+(gm?" "+gm.cls:""),role:"status",id:"genStatus",text:gm?gm.text:""});
   const head=h("div",{class:"card stack"},
-    h("h2",{text: seg==="kanji" ? "Kanji N3 → N2" : (l==="ja"?"Vocabulário N3 → N2":"Vocabulário A2 → B1")}),
+    h("h2",{text: seg==="kanji" ? "Kanji N3 → N2" : (l==="ja"?"Vocabulário N3 → N2":"Vocabulário A2 → B2")}),
     h("p",{class:"small",text: seg==="kanji"
       ? "Cada kanji com leituras on e kun, significado e duas palavras frequentes. Kanji entram junto com as palavras no bloco Palavras do pomodoro (2 por dia)."
       : "Palavras em ordem de utilidade, cada uma com leitura, exemplo e áudio"+(l==="de"?", artigo por cor e plural (ou Perfekt, nos verbos)":"")+". O pomodoro traz de 8 a 10 por dia; o exercício fica mais difícil conforme você acerta: reconhecer, ouvir e, por fim, lembrar sem pista."}),
@@ -2860,6 +2860,7 @@ function renderProgresso(){
       h("li",{}, "Ler bastante no seu nível melhora a leitura: ", h("a",{href:"https://doi.org/10.1002/tesq.157",target:"_blank",rel:"noopener",text:"Nakanishi (2015)"}), ", metanálise de leitura extensiva."),
       h("li",{}, "Correção logo depois da sua produção tem efeito duradouro, maior em respostas livres: ", h("a",{href:"https://doi.org/10.1017/S0272263109990520",target:"_blank",rel:"noopener",text:"Lyster e Saito (2010)"}), ". É o que a conversa e a \"frase sua\" fazem."),
       h("li",{}, "Metas, XP e níveis têm efeito pequeno mas real na motivação e no aprendizado: ", h("a",{href:"https://doi.org/10.1007/s10648-019-09498-w",target:"_blank",rel:"noopener",text:"Sailer e Homner (2020)"}), ". Aqui o nível do curso depende do domínio, não do XP, para o jogo não substituir o estudo."),
+      h("li",{}, "Hábito se forma repetindo todo dia no mesmo contexto, e perder um dia isolado quase não atrapalha: ", h("a",{href:"https://doi.org/10.1002/ejsp.674",target:"_blank",rel:"noopener",text:"Lally et al. (2010)"}), ". Por isso existem a sessão curta de 10 min e o dia protegido na sequência."),
       h("li",{text:"Erro recorrente (3 vezes em 2 semanas) abre uma sequência de correção: contraste, reconhecimento, montagem e produção."}),
       h("li",{text:"Carga controlada: 8–10 palavras novas por dia (máx. 20), metade se houver mais de 35 revisões vencidas ou acerto abaixo de 70 %, zero acima de 60 vencidas. Esses números são escolhas de desenho, não resultados de pesquisa."}))));
   // ajustes
