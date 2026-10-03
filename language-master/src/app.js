@@ -125,7 +125,7 @@ function fullSentence(q){ return q[0].replace(BLANK, q[1][0]); }
 /* =========================================================
    Armazenamento (banco do app; se indisponível, este navegador)
    ========================================================= */
-const store = { mode:"loading", root:null, items:{ja:{},de:{}}, erros:{}, sessoes:{}, perfil:{}, reportes:{}, vocabExtra:{}, dias:{}, listeners:[] };
+const store = { mode:"loading", root:null, items:{ja:{},de:{}}, erros:{}, sessoes:{}, perfil:{}, reportes:{}, vocabExtra:{}, dias:{}, listeners:[], loaded:{} };
 const timers = {};
 function changed(){ store.listeners.forEach(f=>{ try{ f(); }catch(e){} }); }
 function localBlob(){ return LS.get("lm-local") || {itens:{}, erros:{}, sessoes:{}, perfil:{}}; }
@@ -215,13 +215,13 @@ async function initStore(){
       q.docs.forEach(d=>{ const it=thaw(d.data()); if(!it || !next[it.lang]) return; const k=it.id||it._k||d.id; const prev=next[it.lang][k]; if(!prev || (it.mod||0)>=(prev.mod||0)) next[it.lang][k]=it; });
       // mantém versões locais mais novas ainda não gravadas
       for(const l of ["ja","de"]) for(const id in store.items[l]){ const a=store.items[l][id], b=next[l][id]; if(!b || (a.mod||0)>(b.mod||0)) next[l][id]=a; }
-      store.items=next; changed();
+      store.items=next; store.loaded.itens=true; changed();
     }, ()=>{});
     store.root.collection("erros").orderBy("ultima","desc").limit(200).onSnapshot(q=>{
       const next={}; q.docs.forEach(d=>{ const x=thaw(d.data()); next[x._k||d.id]=x; }); store.erros=Object.assign(next, pendingOnly("erros")); changed();
     }, ()=>{});
     store.root.collection("sessoes").orderBy("data","desc").limit(120).onSnapshot(q=>{
-      const next={}; q.docs.forEach(d=>{ const x=thaw(d.data()); next[x._k||d.id]=x; }); store.sessoes=Object.assign(next, pendingOnly("sessoes")); changed();
+      const next={}; q.docs.forEach(d=>{ const x=thaw(d.data()); next[x._k||d.id]=x; }); store.sessoes=Object.assign(next, pendingOnly("sessoes")); store.loaded.sessoes=true; changed();
     }, ()=>{});
     changed();
   }catch(e){
@@ -1254,15 +1254,21 @@ function exFeynman(p, done, o){
   o=o||{};
   const l=p.lang, t0=Date.now(), it=getItem(p);
   const card=h("div",{class:"ex-card"});
-  const inp=h("textarea",{id:"fey-"+p.id,rows:"5",placeholder:"Com suas palavras, em português. Ex.: \"Uso quando… Formo assim… Exemplo meu: … Não confundir com … porque …\""});
+  const inp=h("textarea",{id:"fey-"+p.id,rows:"3",placeholder:"Em português. Ex.: \"Uso quando… Formo com… Não confundir com… porque…\""});
+  const exIn=h("input",{type:"text",id:"feyx-"+p.id,lang:l,autocomplete:"off",spellcheck:"false",placeholder: l==="ja" ? "例：来月から大阪で働くことになりました。" : "Beispiel: Ich habe gestern…"});
+  const textOf=()=>{ const a=inp.value.trim(), b=exIn.value.trim(); return (a?"Explicação: "+a:"")+(a&&b?"\n":"")+(b?"Exemplo: "+b:""); };
+  const enough=()=> inp.value.trim().length>=12 && exIn.value.trim().length>=3;
+  const need=h("p",{class:"small status warn",hidden:true,text:"Escreva as duas partes: a regra em português e uma frase sua no idioma."});
   const checks=[["quando","Quando usar (em que situação)"],["forma","Como formar (o que vem antes)"],["exemplo","Um exemplo meu, diferente dos da aula"],["contraste","A diferença para a estrutura parecida"]];
   card.append(exHeader(p, o.erro ? "Explique o erro" : "Explique como professor"),
     h("p",{text: o.erro
       ? "Sem olhar a regra: explique para um amigo por que \""+o.erro.erro+"\" está errado e como fica certo."
       : (o.again ? "Sem olhar a aula: explique de novo " : "Explique ")+"「"+p.t+"」 para um amigo que nunca estudou "+LANGNAME[l]+"."}),
-    h("ul",{class:"small",style:"margin:0;padding-left:18px"}, checks.map(c=>h("li",{text:c[1]}))),
-    h("p",{class:"small muted",text:"Onde você travar é exatamente o que falta aprender. Frases simples; sem copiar."}),
-    inp);
+    h("label",{class:"small",for:"fey-"+p.id}, h("b",{text:"1. A regra, com suas palavras (em português)"}), h("span",{class:"muted",text:" · quando usar, como formar e com o que não confundir"})),
+    inp,
+    h("label",{class:"small",for:"feyx-"+p.id}, h("b",{text:"2. Uma frase sua em "+LANGNAME[l]}), h("span",{class:"muted",text:" · sobre a sua vida, diferente dos exemplos da aula"})),
+    exIn, need,
+    h("p",{class:"small muted",text:"Onde você travar é exatamente o que falta aprender. Frases simples; sem olhar a aula."}));
   const out=h("div",{class:"stack"});
   const btns=h("div",{class:"row"});
   const aiBtn=h("button",{class:"btn primary",type:"button",text:"Avaliar com o professor"});
@@ -1281,9 +1287,10 @@ function exFeynman(p, done, o){
     if(it && it.feynman && it.feynman.texto && !o.erro) out.append(h("details",{}, h("summary",{class:"small",text:"Sua explicação anterior ("+brDate(it.feynman.data)+")"}), h("p",{class:"small",text:it.feynman.texto})));
     out.append(contBtn(()=>done(ok)));
   }
+  const ready=()=>{ if(enough()){ need.hidden=true; return true; } need.hidden=false; (inp.value.trim().length<12?inp:exIn).focus(); return false; };
   selfBtn.addEventListener("click",()=>{
-    const txt=inp.value.trim(); if(txt.length<20){ inp.focus(); return; }
-    btns.remove(); inp.disabled=true;
+    if(!ready()) return; const txt=textOf();
+    btns.remove(); inp.disabled=true; exIn.disabled=true;
     const boxes=checks.map(c=>h("input",{type:"checkbox",id:"fc-"+c[0]+"-"+p.id}));
     out.append(h("div",{class:"feedback ok"},
       h("div",{class:"verdict",text:"Compare com a aula"}),
@@ -1294,15 +1301,15 @@ function exFeynman(p, done, o){
       h("button",{class:"btn primary",type:"button",text:"Pronto",onclick:e=>{ e.currentTarget.remove(); const n=boxes.filter(b=>b.checked).length; out.append(h("p",{class:"small",text: n>=3 ? "Boa: explicação completa." : "Faltaram "+(4-n)+" partes. Releia a aula e tente de novo amanhã: é aí que a revisão vai focar."})); finish(n>=3, txt, n); }}));
   });
   aiBtn.addEventListener("click", async ()=>{
-    const txt=inp.value.trim(); if(txt.length<20){ inp.focus(); return; }
-    aiBtn.disabled=true; selfBtn.disabled=true; inp.disabled=true;
+    if(!ready()) return; const txt=textOf();
+    aiBtn.disabled=true; selfBtn.disabled=true; inp.disabled=true; exIn.disabled=true;
     const w=h("p",{class:"small muted",text:"O professor está lendo a sua explicação…"}); out.append(w);
     const prompt=`Você avalia a explicação de um aluno brasileiro (${levelLine(l)}) usando o método Feynman: ele deve explicar o ponto como se ensinasse alguém leigo.
 Ponto: ${p.t} — ${p.m}. Formação correta: ${p.f}. Regra: ${p.e} Contraste: ${p.c}
 ${o.erro?`O aluno errou antes: escreveu "${o.erro.erro}" em vez de "${o.erro.correta}". Ele deve explicar por que está errado.`:""}
-Explicação do aluno:
+Resposta do aluno (explicação em português + uma frase de exemplo em ${LANGNAME[l]}):
 """${txt}"""
-Critérios: quando usar, como formar, exemplo próprio correto, diferença para estrutura parecida. Aponte erros de conceito com precisão; não elogie à toa.
+Critérios: quando usar, como formar, exemplo próprio correto, diferença para estrutura parecida. Aponte erros de conceito com precisão; não elogie à toa. Se o exemplo tiver erro de digitação (ex.: kana de meia largura, letra a mais), corrija em correcaoExemplo sem descontar nota por isso.
 Responda só com JSON: {"nota":0-4,"claro":"o que ficou certo, 1 frase","lacunas":["lacuna ou erro, 1 frase cada"],"exemploOk":true,"correcaoExemplo":"exemplo corrigido se houver erro, senão vazio","pergunta":"1 pergunta curta que testa o ponto mais fraco","simples":"a explicação ideal em 2 ou 3 frases simples em português"}`;
     try{
       const r=await sampleFn.json(prompt,{cache:false}); w.remove();
@@ -1327,7 +1334,7 @@ Responda só com JSON: {"nota":0-4,"claro":"o que ficou certo, 1 frase","lacunas
         out.append(h("div",{class:"stack"}, h("p",{class:"small"}, h("b",{text:"Pergunta do professor: "}), r.pergunta), a, h("div",{class:"row"},send), ans));
       }
       finish(ok, txt, r.nota);
-    }catch(e){ w.remove(); const m=aiError(e); if(m) out.append(h("p",{class:"status warn",text:m})); aiBtn.disabled=false; selfBtn.disabled=false; inp.disabled=false; hook(); }
+    }catch(e){ w.remove(); const m=aiError(e); if(m) out.append(h("p",{class:"status warn",text:m})); aiBtn.disabled=false; selfBtn.disabled=false; inp.disabled=false; exIn.disabled=false; hook(); }
   });
   return card;
 }
@@ -1885,7 +1892,11 @@ const PLANS = {
     {id:"pausa",name:"Pausa",min:5,rest:true},
     {id:"conversa",name:"Conversa",min:8},
     {id:"input",name:"Leitura",min:7},
-    {id:"vocab",name:"Palavras",min:5}]
+    {id:"vocab",name:"Palavras",min:5}],
+  curto:[
+    {id:"revisao",name:"Revisão",min:5},
+    {id:"vocab",name:"Palavras",min:3},
+    {id:"fecha",name:"Relâmpago",min:2}]
 };
 const WHY = {
   revisao:["Revisão","Gramática, palavras e kanji que você já estudou voltam no dia certo (FSRS), misturados e com frases novas. A nota sai do seu acerto e do tempo, não de botão."],
@@ -1902,11 +1913,16 @@ const WHY = {
 };
 const MAX_POMOS=4;
 function dayNum(){ return Math.floor(new Date(TODAY+"T12:00").getTime()/864e5); }
-function planFor(done){
-  if(done===0) return dayNum()%2 ? PLANS.mainB : PLANS.main;
-  const ex=[PLANS.extraA, PLANS.extraB, PLANS.extraC];
-  return ex[(dayNum()+done-1)%3];
+/* qual plano vale agora: o que acabou de terminar, a sessão curta escolhida,
+   o pomodoro principal do dia (com aula) ou um extra, em rodízio */
+function planKey(){
+  if(state.finished && state.lastPlan && PLANS[state.lastPlan]) return state.lastPlan;
+  if(state.short) return "curto";
+  if(!state.mainDone) return dayNum()%2 ? "mainB" : "main";
+  return ["extraA","extraB","extraC"][(dayNum()+state.done)%3];
 }
+function planFor(){ return PLANS[planKey()]; }
+const isMainPlan = k => k==="main" || k==="mainB";
 /* rodízio de idiomas: padrão japonês dom/seg/qua/sex e alemão ter/qui/sáb */
 function langOfDay(d){
   const r=(typeof settings!=="undefined" && settings.rotacao)||"rodizio";
@@ -1920,13 +1936,14 @@ function isStudyDay(l, iso){
 }
 let state = (()=>{ const s=LS.get("lm-timer"); if(s && s.day===TODAY) return s; return {day:TODAY, lang:langOfDay(new Date()), elapsed:0, startedAt:null, finished:false, done:0}; })();
 if(typeof state.done!=="number") state.done = state.finished ? 1 : 0;
+if(typeof state.mainDone!=="boolean") state.mainDone = state.done>0;   // estado salvo antes da sessão curta existir
 if(state.startedAt){ state.elapsed += (Date.now()-state.startedAt)/1000; state.startedAt=Date.now(); }
-let BLOCKS=planFor(state.done), TOTAL=25*60, shownBlock=null, audioCtx=null, wakeLock=null, lastBlock=-1, trackKey="";
+let BLOCKS=planFor(), TOTAL=25*60, shownBlock=null, audioCtx=null, wakeLock=null, lastBlock=-1, trackKey="";
 let S=null; // sessão do pomodoro atual
 let exBusy=false, exBusyWarned=false; // há uma questão aberta no palco
 
 function newSession(fresh){
-  const l=state.lang, extra=state.done>0;
+  const l=state.lang, extra=!isMainPlan(planKey());
   if(fresh){ state.pointId=null; }
   let np=null;
   if(!extra){
@@ -1939,7 +1956,7 @@ function newSession(fresh){
   S={lang:l, newPoint:np, hold:!!state.hold && !extra, stats:{ok:0,no:0}, errs:[], touched:[], shadowReps:0, extra, newWords:[], xp:0};
 }
 function syncPlan(){
-  const next = planFor(state.finished ? Math.max(0,state.done-1) : state.done);
+  const next = planFor();
   const key = next.map(b=>b.id).join(",");
   if(key!==trackKey){ BLOCKS=next; TOTAL=BLOCKS.reduce((s,b)=>s+b.min*60,0); trackKey=key; buildTrack(); }
 }
@@ -1962,18 +1979,18 @@ function persist(){ LS.set("lm-timer", state); }
 function renderTimer(){
   syncPlan();
   const t=Math.min(elapsedNow(), TOTAL), {i,left}=blockAt(t), b=BLOCKS[i];
-  const extra=state.done>0 && !state.finished, running=!!state.startedAt, started=t>0||running;
-  const nome = extra ? "Pomodoro extra "+state.done : "Pomodoro";
+  const key=planKey(), short=key==="curto", extra=!short && !isMainPlan(key) && !state.finished, running=!!state.startedAt, started=t>0||running;
+  const nome = short ? "Sessão curta" : extra ? "Pomodoro extra" : "Pomodoro";
   $("#pomo").classList.toggle("compact", started && !state.finished);
   document.body.classList.toggle("running", started && !state.finished);
-  $("#blockname").textContent = state.finished ? (state.done>1?state.done+" pomodoros hoje":"Pomodoro concluído") : started ? (b.name+" · bloco "+(i+1)+" de "+BLOCKS.length) : nome+" de "+LANGNAME[state.lang];
+  $("#blockname").textContent = state.finished ? (short?"Sessão curta concluída":state.done>1?state.done+" sessões hoje":"Pomodoro concluído") : started ? (b.name+" · bloco "+(i+1)+" de "+BLOCKS.length) : nome+" de "+LANGNAME[state.lang];
   $("#clock").textContent = state.finished ? "済" : fmt(started?left:TOTAL);
-  $("#total").textContent = state.finished ? "Hoje: "+state.done*25+" min de estudo" : (started? fmt(TOTAL-t)+" restantes" : Math.round(TOTAL/60)+" min · "+BLOCKS.filter(b=>!b.rest).length+" blocos");
+  $("#total").textContent = state.finished ? "Hoje: "+minutesToday()+" min de estudo" : (started? fmt(TOTAL-t)+" restantes" : Math.round(TOTAL/60)+" min · "+BLOCKS.filter(b=>!b.rest).length+" blocos");
   const frac = state.finished ? 1 : t/TOTAL;
   $("#ring").setAttribute("stroke-dashoffset", String(100-100*frac));
   [...$("#seglabels").children].forEach((x,k)=>{ x.classList.toggle("now", started && k===i && !state.finished); x.classList.toggle("done", state.finished || (started && k<i)); });
   const podeMais=state.done<MAX_POMOS;
-  $("#startBtn").textContent = state.finished ? (podeMais?"Mais um pomodoro":"Concluído hoje") : running ? "Pausar" : (t>0?"Continuar":(state.done>0?"Começar pomodoro extra":"Começar pomodoro"));
+  $("#startBtn").textContent = state.finished ? (podeMais?(state.mainDone?"Mais um pomodoro":"Fazer o pomodoro completo"):"Concluído hoje") : running ? "Pausar" : (t>0?"Continuar":(short?"Começar sessão curta":extra?"Começar pomodoro extra":"Começar pomodoro"));
   $("#startBtn").disabled = state.finished && !podeMais;
   $("#skipBtn").disabled = state.finished || !started;
   $("#resetBtn").disabled = state.finished || !started;
@@ -2001,7 +2018,7 @@ $("#startBtn").addEventListener("click",()=>{
   if(state.finished){
     if(state.done>=MAX_POMOS) return;
     if(settings.rotacao==="ambos") setLang(state.done%2 ? "ja" : "de", false);
-    state.finished=false; state.elapsed=0; state.startedAt=Date.now(); keepAwake(true); syncPlan(); lastBlock=0; newSession(true); shownBlock=null;
+    state.finished=false; state.short=false; state.lastPlan=null; state.elapsed=0; state.startedAt=Date.now(); keepAwake(true); syncPlan(); lastBlock=0; newSession(true); shownBlock=null;
   } else if(state.startedAt){ state.elapsed=elapsedNow(); state.startedAt=null; keepAwake(false); }
   else { if(!S || elapsedNow()===0) newSession(elapsedNow()===0); state.startedAt=Date.now(); keepAwake(true); lastBlock=blockAt(state.elapsed).i; }
   persist(); renderTimer();
@@ -2023,8 +2040,10 @@ $("#resetYes").addEventListener("click",()=>{
 });
 function tick(){
   if(!state.finished && elapsedNow()>=TOTAL){
-    state.elapsed=TOTAL; state.startedAt=null; state.finished=true; state.done++; keepAwake(false); chime(); persist(); finishSession();
-    addDay(state.lang, {pomos:1, xp:30});
+    const key=planKey();
+    state.elapsed=TOTAL; state.startedAt=null; state.finished=true; state.done++; state.lastPlan=key; if(isMainPlan(key)) state.mainDone=true;
+    keepAwake(false); chime(); persist(); finishSession(key);
+    addDay(state.lang, key==="curto" ? {curtas:1, xp:15} : {pomos:1, xp:30});
   }
   renderTimer();
 }
@@ -2040,10 +2059,11 @@ document.addEventListener("keydown",e=>{
 /* virou o dia com o app aberto: as datas de revisão mudam */
 setInterval(()=>{ if(isoDay(new Date())!==TODAY && !state.startedAt) banner("Começou um novo dia: recarregue a página para ver as revisões de hoje."); }, 60000);
 
-function finishSession(){
+function minutesToday(){ return Object.values(store.sessoes).filter(s=>s.data===TODAY).reduce((a,s)=>a+(Number(s.minutos)||0),0); }
+function finishSession(key){
   const n=state.done;
   const s=S||{stats:{ok:0,no:0},touched:[],errs:[]};
-  saveSessao(TODAY+"-"+n, {data:TODAY, idioma:state.lang, minutos:25, numero:n, extra:n>1,
+  saveSessao(TODAY+"-"+n, {data:TODAY, idioma:state.lang, minutos:Math.round(TOTAL/60), numero:n, extra:!isMainPlan(key), curta:key==="curto",
     blocos:BLOCKS.filter(b=>!b.rest).map(b=>({bloco:b.id,minutos:b.min})),
     acertos:s.stats.ok, erros:s.stats.no, pontos:s.touched, palavrasNovas:(s.newWords||[]).map(v=>v.id), pontoNovo:s.newPoint?s.newPoint.id:null, shadowing:s.shadowReps||0,
     concluidaEm:new Date().toISOString()});
@@ -2053,27 +2073,47 @@ function finishSession(){
 function toast(msg){ const t=$("#gtoast"); if(!t) return; t.textContent=msg||""; t.hidden=!msg; clearTimeout(toast.t); if(msg) toast.t=setTimeout(()=>t.hidden=true, 5000); }
 function stageSet(...els){ const st=$("#stage"); st.innerHTML=""; exBusy=false; els.forEach(e=>e&&st.append(e)); }
 
+/* dias desde o último dia estudado (qualquer idioma); null se nunca estudou */
+function daysAway(){
+  if(studiedOn(TODAY)) return 0;
+  for(let k=1;k<=120;k++) if(studiedOn(addDays(TODAY,-k))) return k;
+  return null;
+}
 function showIdle(){
   shownBlock="idle"; S=null;
-  const l=state.lang, np=state.done>0?null:nextNew(l), due=dueItems(l).length;
-  const plan=planFor(state.done);
+  const l=state.lang, key=planKey(), short=key==="curto", main=isMainPlan(key);
+  const np=main?nextNew(l):null, due=dueItems(l).length, plan=planFor();
+  const away=daysAway(), first=!Object.keys(store.sessoes).length;
+  const other=l==="ja"?"de":"ja", dueOther=dueItems(other).length;
+  const pl=newVocabPlan(l,null), nNew=pl.words.length+pl.kanji.length;
+  const toggleShort=on=>{ state.short=on; persist(); syncPlan(); renderTimer(); showIdle(); };
   const card=h("div",{class:"card stack"},
-    h("div",{class:"eyebrow",text: state.done>0 ? "Próximo pomodoro" : "Seu pomodoro de hoje"}),
+    h("div",{class:"row"}, h("span",{class:"eyebrow",text: short ? "Sessão curta · 10 min" : main ? "Seu pomodoro de hoje" : "Próximo pomodoro"}), h("span",{class:"spacer"}),
+      state.finished ? null : h("button",{class:"linkbtn",type:"button",text: short ? "Prefiro o pomodoro completo" : "Só tenho 10 min",onclick:()=>toggleShort(!short)})),
+    away!=null && away>=3 ? h("div",{class:"tip small"}, h("b",{text:"Bem-vindo de volta. "}), "Faz "+away+" dias. Sem problema: a revisão de hoje vem limitada e os itens mais antigos primeiro"+(due>35?"; palavras novas ficam em pausa até a fila baixar":"")+". "+(short?"":"Se o dia estiver corrido, a sessão curta de 10 min já conta para a sequência.")) : null,
     np ? h("div",{}, h("div",{class:"small muted",text:"Ponto novo de hoje"}), h("div",{class:"lesson-title",lang:l,style:"font-size:1.5rem",text:np.t}), h("div",{text:np.m}))
-       : state.done>0 ? h("p",{text:"Pomodoro extra: sem ponto novo. Leitura, prática mista e shadowing com o que você já viu."})
+       : short ? h("p",{text:"Revisão, algumas palavras novas e um teste relâmpago. Sem aula nova: ela fica para o pomodoro completo."})
+       : !main ? h("p",{text:"Pomodoro extra: sem ponto novo. Leitura, escuta, conversa e prática com o que você já viu."})
        : h("p",{text:"Você já viu todos os pontos da trilha. Os pomodoros agora focam em revisão, leitura e produção."}),
-    h("div",{class:"small",text: (due ? due+" ite"+(due>1?"ns":"m")+" para revisar hoje" : "Nenhuma revisão vencida hoje")+" · palavras novas previstas: "+(()=>{ const pl=newVocabPlan(l,null); return pl.words.length+(pl.kanji.length?" + "+pl.kanji.length+" kanji":""); })()+"."}),
-    (!learned(l).length && !(store.perfil[l]&&store.perfil[l].diagnostico)) ? h("div",{class:"tip small"}, "Primeira vez em "+LANGNAME[l]+"? Faça antes o ", h("button",{class:"linkbtn",type:"button",text:"teste de nível",onclick:()=>{ selectTab("progresso"); setTimeout(()=>{ const b=[...document.querySelectorAll("#tab-progresso button")].find(x=>/teste de nível/i.test(x.textContent)); b&&b.click(); b&&b.scrollIntoView&&0; window.scrollTo(0,0); },50); }}), " (10 min) para pular o que você já sabe.") : null,
-    h("ul",{class:"plan"}, plan.map(b=>h("li",{}, h("span",{class:"min",text:b.min+" min"}), h("span",{}, h("b",{text:WHY[b.id][0]}), h("span",{class:"small muted",text:WHY[b.id][1]}))))),
-    h("p",{class:"small muted",text:"Toque em Começar pomodoro. Cada bloco abre a atividade certa aqui embaixo e o tempo muda de bloco sozinho; se terminar antes, use Próximo bloco."}));
+    h("div",{class:"row small"},
+      h("span",{class:"chip"+(due?" s2":""),text: due ? due+" revis"+(due>1?"ões":"ão") : "sem revisões vencidas"}),
+      h("span",{class:"chip",text: nNew ? nNew+" ite"+(nNew>1?"ns":"m")+" novo"+(nNew>1?"s":"") : "sem palavras novas hoje"})),
+    (!learned(l).length && !(store.perfil[l]&&store.perfil[l].diagnostico)) ? h("div",{class:"tip small"}, "Primeira vez em "+LANGNAME[l]+"? Faça antes o ", h("button",{class:"linkbtn",type:"button",text:"teste de nível",onclick:()=>{ selectTab("progresso"); setTimeout(()=>{ const b=[...document.querySelectorAll("#tab-progresso button")].find(x=>/teste de nível/i.test(x.textContent)); b&&b.click(); window.scrollTo(0,0); },50); }}), " (10 min) para pular o que você já sabe.") : null,
+    h("details",{open:first||null}, h("summary",{class:"small",text:"O que acontece em cada bloco"}),
+      h("ul",{class:"plan"}, plan.map(b=>h("li",{}, h("span",{class:"min",text:b.min+" min"}), h("span",{}, h("b",{text:WHY[b.id][0]}), h("span",{class:"small muted",text:WHY[b.id][1]}))))),
+      h("p",{class:"small muted",text:"Cada bloco abre a atividade certa aqui embaixo e o tempo muda de bloco sozinho; se terminar antes, use Próximo bloco."})),
+    dueOther && !state.startedAt ? h("div",{class:"row small muted"}, h("span",{lang:other,text:(other==="ja"?"日本語":"Deutsch")+": "+dueOther+" revis"+(dueOther>1?"ões":"ão")+" esperando."}),
+      h("button",{class:"linkbtn",type:"button",text:"Revisar agora",onclick:()=>{ setLang(other,true); selectTab("revisar"); window.scrollTo(0,0); }})) : null);
   stageSet(card);
 }
 function showDone(){
   shownBlock="done";
+  const short=state.lastPlan==="curto";
   const card=h("div",{class:"card stack"},
-    h("h2",{text:"Pomodoro concluído"}),
+    h("h2",{text: short ? "Sessão curta concluída" : "Pomodoro concluído"}),
     summaryView(S),
-    h("p",{class:"small muted",text: state.done<MAX_POMOS ? "Quer mais? O próximo pomodoro tem leitura com os pontos que você já viu, prática mista e shadowing." : "Limite de "+MAX_POMOS+" pomodoros por dia. O que você estudou fixa melhor com intervalo."}));
+    h("p",{class:"small muted",text: state.done>=MAX_POMOS ? "Limite de "+MAX_POMOS+" sessões por dia. O que você estudou fixa melhor com intervalo."
+      : short ? "Já conta para a sequência. Se sobrar tempo hoje, o pomodoro completo traz a aula nova." : "Quer mais? O próximo pomodoro tem leitura, escuta ou conversa com o que você já viu."}));
   stageSet(card);
 }
 function showBlock(i, auto){
@@ -2940,7 +2980,23 @@ function renderRail(){
     h("h3",{text:"Objetivo"}),
     ...LVL_ORDER[l].map(x=>{ const pr=levelProgress(l,x); return h("div",{class:"lvlmeter"}, h("b",{text:x}), h("div",{class:"bar"}, h("i",{style:`width:${pr*100}%;background:${levelDone(l,x)?"var(--ok)":"var(--accent)"}`})), h("span",{class:"v",text:levelDone(l,x)?"✓":Math.round(pr*100)+"%"})); }));
 }
-function renderUI(){ try{ renderRank(); renderGoals(); renderHello(); renderRail(); }catch(e){ console.warn("ui",e); } }
+/* XP pelo que foi estudado antes de existir XP (versões anteriores a 28/09/2026).
+   Roda uma vez por idioma, quando os dados da conta já carregaram. */
+const XP_SINCE="2026-09-28";
+function backfillXP(){
+  if(!(store.mode==="local" || (store.mode==="db" && store.loaded.itens && store.loaded.sessoes))) return;
+  for(const l of ["ja","de"]){
+    const pf=store.perfil[l]; if(!pf || pf.xpRetro) continue;
+    let xp=0;
+    Object.values(store.items[l]).forEach(it=>{ if(!it || (it.criado||"")>=XP_SINCE) return; if(it.estado>=2) xp+=3; xp+=(it.acertos||0)*5+(it.erros||0)*2; });
+    Object.values(pf.blocos||{}).forEach(b=>{ if(b && b.passou && (b.data||"")<XP_SINCE) xp+=20; });
+    Object.values(store.sessoes).forEach(x=>{ if(x && x.idioma===l && (x.data||"")<XP_SINCE) xp+=30; });
+    pf.xpRetro=TODAY;
+    if(xp>0){ pf.xp=(pf.xp||0)+xp; if(l===state.lang) toast("+"+xp+" XP pelo que você já tinha estudado em "+LANGNAME[l]+"."); }
+    savePerfil(l);
+  }
+}
+function renderUI(){ try{ backfillXP(); renderRank(); renderGoals(); renderHello(); renderRail(); }catch(e){ console.warn("ui",e); } }
 let uiTimer=null;
 function scheduleUI(){ clearTimeout(uiTimer); uiTimer=setTimeout(renderUI,120); }
 /* o mesmo relógio e as mesmas metas mudam de lugar: coluna direita no computador, dentro de Hoje no celular */

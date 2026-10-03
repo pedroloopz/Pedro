@@ -10,6 +10,7 @@ const OUT = path.join(ROOT, "test", "out"); fs.mkdirSync(OUT, {recursive:true});
 const skeleton = body => `<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>${body}</body></html>`;
 const app = fs.readFileSync(path.join(ROOT,"dist","language-master.html"),"utf8");
 const mock = fs.readFileSync(path.join(__dirname,"mock-claude.js"),"utf8");
+const dayRel = n => { const d=new Date(Date.now()+n*864e5); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); };
 const page_html = skeleton(`<script>${mock}</script>` + app);
 fs.writeFileSync(path.join(OUT,"page.html"), page_html);
 
@@ -26,6 +27,8 @@ const STEP = `(scopeSel)=>{
   for(const t of ["Conferir","Pronto","Testar agora","Próxima","Entendi","Seguir para o próximo"]){ const b=byText(t); if(b){ if(t==="Conferir"){ const inp=[...scope.querySelectorAll("textarea,input[type=text]")].filter(vis).pop(); if(inp && !inp.value){ inp.value="テスト teste"; inp.dispatchEvent(new Event("input",{bubbles:true})); } } b.click(); return t; } }
   const ta=[...scope.querySelectorAll("textarea")].filter(vis).find(t=>!t.value);
   if(ta){ ta.value="Uso quando quero explicar a regra, formo assim e dou um exemplo meu diferente do da aula."; ta.dispatchEvent(new Event("input",{bubbles:true})); return "type"; }
+  const ti=[...scope.querySelectorAll('input[type=text]')].filter(vis).find(t=>!t.value);
+  if(ti){ ti.value="今日は日本語を勉強します。"; ti.dispatchEvent(new Event("input",{bubbles:true})); return "type-ex"; }
   for(const t of ["Corrigir com o professor","Avaliar com o professor","Comparar com um exemplo","Conferir sozinho","Sim, usei certo"]){ const b=byText(t); if(b){ b.click(); return t; } }
   const cb=[...scope.querySelectorAll('input[type=checkbox][id^="fc-"]')].filter(vis); if(cb.length){ cb.forEach(c=>c.checked=true); return "check"; }
   return "idle";
@@ -41,14 +44,16 @@ const STEP = `(scopeSel)=>{
     const page = await ctx.newPage();
     page.on("pageerror", e => errors.push("[pageerror "+viewport.width+"] "+e.message+"\n"+(e.stack||"").split("\n").slice(0,4).join("\n")));
     page.on("console", m => { if(m.type()==="error" && !/ERR_CERT|ERR_NAME|fonts\.g/.test(m.text())) errors.push("[console "+viewport.width+"] "+m.text()); });
-    await page.addInitScript(({noai, db})=>{
+    await page.addInitScript(({noai, db, ja})=>{
       if(noai) window.__NOAI=true;
+      // rodízio fixo em japonês: o cenário não depende do dia da semana em que o teste roda
+      if(ja && !localStorage.getItem("lm-settings")) localStorage.setItem("lm-settings", JSON.stringify({rotacao:"ja"}));
       if(db) window.__MOCKDB=db;
       // voz instantânea no navegador sem áudio
       const fake={ speak:u=>setTimeout(()=>{ u.onend && u.onend(); },5), cancel(){}, getVoices:()=>[], onvoiceschanged:null };
       Object.defineProperty(window,"speechSynthesis",{value:fake, configurable:true});
       window.SpeechSynthesisUtterance = function(t){ this.text=t; };
-    }, {noai:!!opts.noai, db:opts.db||null});
+    }, {noai:!!opts.noai, db:opts.db||null, ja:!!opts.ja});
     await page.goto("file://"+path.join(OUT,"page.html"));
     await page.waitForTimeout(600);
     return {page, ctx};
@@ -236,7 +241,7 @@ const STEP = `(scopeSel)=>{
     old[base]={criadoEm:"2026-09-01", versao:"v2"};
     old[base+"/itens/ja-yonisuru"]={id:"ja-yonisuru",lang:"ja",u:"n3-1",tipo:"gramatica",estado:5,reps:3,ef:2.5,intervalo:6,vence:"2026-09-20",acertos:6,erros:1,ultima:"2026-09-14",srsDia:"2026-09-14",prodDias:["2026-09-10"],criado:"2026-09-01",S:6,ultRev:"2026-09-14",mod:1,_k:"ja-yonisuru"};
     old[base+"/perfil/ja"]={idioma:"ja",competencias:{gramatica:{rating:280,margem:60,evidencias:10,tiposTarefa:["mc"],ultima:"2026-09-14"}},atualizado:"2026-09-14",_k:"ja"};
-    const {page, ctx} = await newPage({width:390, height:844}, {db:old});
+    const {page, ctx} = await newPage({width:390, height:844}, {db:old, ja:true});
     await page.waitForTimeout(500);
     check("item antigo aparece como revisão vencida", await page.evaluate(()=>Number(document.querySelector(".dueBadge").textContent)>=1), await page.evaluate(()=>document.querySelector(".dueBadge").textContent));
     await page.click('.bottombar [data-tab="revisar"]'); await page.waitForTimeout(150);
@@ -244,7 +249,7 @@ const STEP = `(scopeSel)=>{
     await steps(page,"#tab-revisar",20);
     await page.waitForTimeout(800);
     const it = await page.evaluate(()=>window.__MOCKDB["data/users/user_test_1/app/itens/ja-yonisuru"]);
-    check("item antigo migrado para FSRS", it && it.fsrs===6 && it.D>=1 && it.vence>"2026-09-28", JSON.stringify({S:it&&it.S,D:it&&it.D,vence:it&&it.vence}));
+    check("item antigo migrado para FSRS", it && it.fsrs===6 && it.D>=1 && it.vence>new Date().toISOString().slice(0,10), JSON.stringify({S:it&&it.S,D:it&&it.D,vence:it&&it.vence}));
     await ctx.close();
   }
 
@@ -252,10 +257,10 @@ const STEP = `(scopeSel)=>{
   {
     const base="data/users/user_test_1/app", db={};
     db[base]={criadoEm:"2026-09-01", versao:"v2"};
-    const mk=(id,u)=>({id,lang:"ja",u,tipo:"gramatica",estado:4,reps:2,intervalo:3,vence:"2026-09-27",acertos:3,erros:3,ultima:"2026-09-24",srsDia:"2026-09-24",prodDias:[],criado:"2026-09-10",S:3,D:6,fsrs:6,ultRev:"2026-09-24",mod:1,_k:id});
+    const mk=(id,u)=>({id,lang:"ja",u,tipo:"gramatica",estado:4,reps:2,intervalo:3,vence:dayRel(-2),acertos:3,erros:3,ultima:dayRel(-5),srsDia:dayRel(-5),prodDias:[],criado:dayRel(-20),S:3,D:6,fsrs:6,ultRev:dayRel(-5),mod:1,_k:id});
     ["ja-yonisuru","ja-yoninaru","ja-kotonisuru"].forEach(id=>db[base+"/itens/"+id]=mk(id,"n3-1"));
-    for(let k=0;k<3;k++) db[base+"/erros/e"+k]={idioma:"ja",competencia:"gramatica",conteudo:"ja-yonisuru",ponto:"〜ようにする",erro:"食べなくてようにする"+k,correta:"食べないようにする",ocorrencias:1,primeira:"2026-09-2"+k,ultima:"2026-09-2"+(k+1),corrigido:false,acertosDepois:0,_k:"e"+k};
-    const {page, ctx} = await newPage({width:1280, height:800}, {db});
+    for(let k=0;k<3;k++) db[base+"/erros/e"+k]={idioma:"ja",competencia:"gramatica",conteudo:"ja-yonisuru",ponto:"〜ようにする",erro:"食べなくてようにする"+k,correta:"食べないようにする",ocorrencias:1,primeira:dayRel(-8+k),ultima:dayRel(-7+k),corrigido:false,acertosDepois:0,_k:"e"+k};
+    const {page, ctx} = await newPage({width:1280, height:800}, {db, ja:true});
     await page.waitForTimeout(500);
     await page.click("#startBtn"); await page.waitForTimeout(250);
     check("revisão abre com sequência de correção", await page.evaluate(()=>/Erro recorrente/.test(document.querySelector("#stage").textContent)));
@@ -281,6 +286,45 @@ const STEP = `(scopeSel)=>{
     await page.evaluate(()=>[...document.querySelectorAll("#tab-praticar .wpop button")].find(b=>/Adicionar|Estudar/.test(b.textContent)).click()); await page.waitForTimeout(100);
     check("glossário adiciona palavra", await page.evaluate(()=>/volta amanhã|Já está/.test(document.querySelector("#tab-praticar .wpop").textContent)));
     await shot(page,"d-glossario");
+    await ctx.close();
+  }
+
+  /* ---------- 6. volta após pausa, XP retroativo, sessão curta e poemas ---------- */
+  {
+    const base="data/users/user_test_1/app", db={};
+    db[base]={criadoEm:"2026-09-01", versao:"v2"};
+    const old="2026-09-20";   // antes do XP existir (28/09)
+    db[base+"/sessoes/"+old+"-1"]={data:old, idioma:"ja", minutos:25, numero:1, extra:false, _k:old+"-1"};
+    db[base+"/itens/ja-yonisuru"]={id:"ja-yonisuru",lang:"ja",u:"n3-1",tipo:"gramatica",estado:4,reps:1,intervalo:2,vence:dayRel(-4),acertos:2,erros:1,ultima:old,srsDia:old,prodDias:[],criado:"2026-09-20",S:2,ultRev:old,mod:1,_k:"ja-yonisuru"};
+    const {page, ctx} = await newPage({width:390, height:844}, {db, ja:true});
+    await page.waitForTimeout(700);
+    check("aviso de volta após pausa", await page.evaluate(()=>/Bem-vindo de volta/.test(document.querySelector("#stage").textContent)));
+    const xp = await page.evaluate(()=>window.__MOCKDB["data/users/user_test_1/app/perfil/ja"]);
+    check("XP retroativo calculado uma vez", xp && xp.xpRetro && xp.xp===3+2*5+1*2+30, JSON.stringify(xp&&{xp:xp.xp,retro:xp.xpRetro}));
+    // sessão curta de 10 min
+    await page.evaluate(()=>[...document.querySelectorAll("#stage .linkbtn")].find(b=>/10 min/.test(b.textContent)).click()); await page.waitForTimeout(150);
+    check("sessão curta: relógio em 10 min", await page.evaluate(()=>document.querySelector("#clock").textContent==="10:00" && /sessão curta/i.test(document.querySelector("#startBtn").textContent)));
+    await page.click("#startBtn"); await page.waitForTimeout(200);
+    for(let k=0;k<3;k++){ await page.click("#skipBtn"); await page.waitForTimeout(250); }
+    await page.waitForTimeout(700);
+    const ses = await page.evaluate(()=>Object.entries(window.__MOCKDB).filter(([k])=>k.includes("/sessoes/")).map(([,v])=>v).find(v=>v.curta));
+    check("sessão curta salva (10 min, conta no dia)", ses && ses.minutos===10 && ses.curta===true, JSON.stringify(ses));
+    check("depois da curta, oferece o pomodoro completo", await page.evaluate(()=>/pomodoro completo/i.test(document.querySelector("#startBtn").textContent)));
+    await shot(page,"m-curta-feita");
+    await page.click("#startBtn"); await page.waitForTimeout(250);
+    check("pomodoro completo após a curta tem aula", await page.evaluate(()=>/Aula/.test(document.querySelector("#seglabels").textContent) && document.querySelector("#clock").textContent!=="10:00"));
+    await page.click("#startBtn"); await page.waitForTimeout(100);
+    // poemas
+    await page.click('.bottombar [data-tab="praticar"]'); await page.waitForTimeout(150);
+    await page.evaluate(()=>[...document.querySelectorAll("#tab-praticar .segctl button")].find(b=>b.textContent==="Poemas").click()); await page.waitForTimeout(150);
+    await page.evaluate(()=>document.querySelector("#tab-praticar .textlist button").click()); await page.waitForTimeout(150);
+    check("poema abre em tategaki", await page.evaluate(()=>!!document.querySelector("#tab-praticar .poem-face.tate")));
+    for(const m of ["Decorar","Ordenar","Entender","Ler"]){
+      await page.evaluate(m=>[...document.querySelectorAll("#tab-praticar .segctl button")].find(b=>b.textContent===m).click(), m); await page.waitForTimeout(120);
+    }
+    await page.evaluate(()=>[...document.querySelectorAll("#tab-praticar button")].find(b=>b.textContent==="Marcar como lido").click()); await page.waitForTimeout(700);
+    check("poema marcado como lido", await page.evaluate(()=>{ const p=window.__MOCKDB["data/users/user_test_1/app/perfil/ja"]; return p && p.poemas && Object.values(p.poemas).some(x=>x.lido); }));
+    await shot(page,"m-poema");
     await ctx.close();
   }
 
