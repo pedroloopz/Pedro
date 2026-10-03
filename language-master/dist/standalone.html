@@ -7754,12 +7754,15 @@ function renderProgresso(){
   // últimos 14 dias
   const days=h("div",{class:"days","aria-label":"Últimos 14 dias"});
   for(let k=13;k>=0;k--){ const iso=addDays(TODAY,-k); const dj=dayOf("ja",iso), dd=dayOf("de",iso);
-    const on=x=>x && ((x.ok||0)+(x.no||0)>=10 || x.pomos);
-    const cls = on(dj)&&on(dd) ? "both" : on(dj) ? "ja" : on(dd) ? "de" : (st.freezes.includes(iso)?"freeze":"");
+    const on=x=>x && ((x.ok||0)+(x.no||0)>=10 || x.pomos || x.curtas);
+    // sessões salvas também contam (inclusive as de antes dos contadores diários)
+    const ses=lg=>Object.values(store.sessoes).some(x=>x && x.data===iso && x.idioma===lg);
+    const oj=on(dj)||ses("ja"), od=on(dd)||ses("de");
+    const cls = oj&&od ? "both" : oj ? "ja" : od ? "de" : (st.freezes.includes(iso)?"freeze":"");
     days.append(h("div",{class:"day "+cls,title:brDate(iso)})); }
   box.append(h("div",{class:"card"}, h("h3",{text:"Últimos 14 dias"}), days,
     h("div",{class:"row small muted",style:"margin-top:8px;gap:14px"}, h("span",{}, h("span",{style:"color:var(--ja)",text:"■"})," japonês"), h("span",{}, h("span",{style:"color:var(--de)",text:"■"})," alemão"), h("span",{text:"▢ dia protegido"})),
-    h("p",{class:"small muted",style:"margin-top:6px",text:"Dia estudado = 10 respostas ou um pomodoro. Um dia perdido por semana não quebra a sequência."})));
+    h("p",{class:"small muted",style:"margin-top:6px",text:"Dia estudado = 10 respostas, uma sessão curta ou um pomodoro. Um dia perdido por semana não quebra a sequência."})));
   box.append(h("div",{class:"card stack"}, h("h3",{text:"Sua curva do esquecimento (FSRS)"}), forgettingChart(l)));
   const diag=pf.diagnostico;
   const dg=h("div",{class:"card stack"}, h("h3",{text:"Teste de nível"}),
