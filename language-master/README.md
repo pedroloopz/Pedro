@@ -1,8 +1,8 @@
 # Language Master
 
 App de estudo de japonês (N3 → fim do N2) e alemão (A2 → B2), feito para rodar como
-artifact no Claude. Pomodoro de 25 min com revisão espaçada (FSRS-6), aula, prática,
-palavras, kanji, escuta, leitura, conversa com o professor (Claude), metas diárias,
+artifact no Claude. Pomodoro de 25 min (ou sessão curta de 10 min) com revisão espaçada (FSRS-6), aula, prática,
+palavras, kanji, escuta, leitura, poemas, conversa com o professor (Claude), metas diárias,
 níveis e exames para pular o que você já sabe.
 
 ## Estrutura
@@ -19,8 +19,8 @@ níveis e exames para pular o que você já sabe.
 
 ## Conteúdo
 
-- Japonês: 31 blocos, 155 pontos de gramática (revisão N3 + N2 completo), ~570 palavras, ~310 kanji, 6 textos.
-- Alemão: 14 blocos, 70 pontos de gramática (A2, B1, B2), ~460 palavras, 6 textos.
+- Japonês: 31 blocos, 155 pontos de gramática (revisão N3 + N2 completo), 770 palavras, ~310 kanji, 6 textos, 9 poemas (haiku, tanka, Tōson).
+- Alemão: 14 blocos, 70 pontos de gramática (A2, B1, B2), 657 palavras, 6 textos, 6 poemas (Goethe, Heine, Eichendorff, Rilke).
 - Mais palavras e kanji: botão "Gerar mais" na Trilha (usa o Claude), e palavras tocadas na leitura.
 
 Formato dos pontos de gramática (`src/data/ja-*.js`, `de-*.js`):

@@ -74,7 +74,7 @@ function finishVocab(v, l){
 for(const l of ["ja","de"]){
   const c=C[l]; c.vocab=[]; c.kanji=[]; c.kanjiByChar={};
   let lv="";
-  const vsrc = l==="ja" ? [LM_VJA, LM_VJA2] : [LM_VDE, LM_VDE2];
+  const vsrc = l==="ja" ? [LM_VJA, LM_VJA2, LM_VJA3] : [LM_VDE, LM_VDE2, LM_VDE3];
   vsrc.join("\n").split("\n").forEach(line=>{
     line=line.trim(); if(!line) return; if(line[0]==="#"){ lv=line.slice(1); return; }
     const f=line.split("|"); if(f.length<6) return;
