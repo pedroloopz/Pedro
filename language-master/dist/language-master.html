@@ -368,6 +368,13 @@ body.lang-de .reader .rline{font-size:1.1rem; line-height:1.8}
 .reader.furi rt{visibility:visible}
 .rrow{display:flex; flex-direction:column; gap:2px; padding:6px 0; border-top:1px solid var(--line)}
 .wpop{background:var(--surface); border:2px solid var(--accent); border-radius:12px; padding:12px; display:flex; flex-direction:column; gap:6px}
+.tokw.nova{border-bottom:2px solid var(--accent); font-weight:600}
+.cover{display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; padding:8px 10px; background:var(--accent-soft); border-radius:10px}
+.cover b{font-family:var(--display); font-size:1.1rem; color:var(--accent)}
+.mnemo{border-left:3px solid var(--warn); padding:2px 0 2px 10px; margin:4px 0}
+.plano{border-left:3px solid var(--accent); padding:4px 0 4px 12px; gap:6px}
+.daypick button{flex:1 1 0; min-width:0; padding:8px 4px}
+.daypick button[aria-pressed="true"]{background:var(--accent); color:#fff; font-weight:700}
 .opt.idk{color:var(--muted); font-style:italic}
 .textlist{display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:10px}
 .textlist button{text-align:left; border:1px solid var(--line); background:var(--surface); border-radius:12px; padding:12px; display:flex; flex-direction:column; gap:4px}
@@ -417,6 +424,179 @@ body.lang-de .reader .rline{font-size:1.1rem; line-height:1.8}
 .mline.peek{border-style:solid; border-color:var(--warn)}
 .mline .mgap{color:var(--muted); letter-spacing:.12em}
 .pgap-h{height:4px}
+
+/* =========================================================
+   v4 — 藍と和紙 (índigo e papel washi)
+   Camada visual: papel com fibra, cartões que flutuam sem borda dura,
+   botões táteis, estados com ícone além da cor e ação principal ao alcance do polegar.
+   ========================================================= */
+:root{
+  --bg:#EDEFEA; --surface:#FBFBF8; --sunk:#E4E7E1; --line:#D2D6CF; --hair:rgba(27,30,36,.08);
+  --muted:#545C66;
+  --r:18px; --r-sm:12px;
+  --shadow:0 1px 0 rgba(255,255,255,.7) inset, 0 1px 2px rgba(22,30,44,.05), 0 8px 24px -12px rgba(22,30,44,.16);
+  --shadow-lift:0 1px 2px rgba(22,30,44,.06), 0 14px 34px -14px rgba(22,30,44,.28);
+  --ease:cubic-bezier(.2,.7,.2,1);
+  --washi:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .1 0 0 0 0 .12 0 0 0 0 .16 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F1217; --surface:#171B22; --sunk:#12151B; --line:#2A303A; --hair:rgba(255,255,255,.06); --muted:#9EA7B2;
+    --shadow:0 1px 0 rgba(255,255,255,.03) inset, 0 10px 28px -14px rgba(0,0,0,.7);
+    --shadow-lift:0 16px 36px -14px rgba(0,0,0,.8);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F1217; --surface:#171B22; --sunk:#12151B; --line:#2A303A; --hair:rgba(255,255,255,.06); --muted:#9EA7B2;
+  --shadow:0 1px 0 rgba(255,255,255,.03) inset, 0 10px 28px -14px rgba(0,0,0,.7);
+  --shadow-lift:0 16px 36px -14px rgba(0,0,0,.8);
+}
+body{background:var(--bg) var(--washi) repeat; background-attachment:fixed}
+::selection{background:var(--accent-soft); color:var(--ink)}
+
+/* superfícies */
+.card,.pomo,.ex-card{background:var(--surface); border:1px solid var(--hair); border-radius:var(--r); box-shadow:var(--shadow)}
+.card{padding:18px}
+.card > h3:first-child,.card > .row:first-child > h3{display:flex; align-items:center; gap:8px}
+.card > h3:first-child::before{content:""; width:6px; height:6px; border-radius:50%; background:var(--accent); flex:none}
+details > summary{list-style:none; display:flex; align-items:center; gap:8px}
+details > summary::-webkit-details-marker{display:none}
+details > summary::after{content:"＋"; margin-left:auto; color:var(--muted); font-weight:400; transition:transform .2s var(--ease)}
+details[open] > summary::after{transform:rotate(45deg)}
+.formula{background:var(--sunk); border-left:3px solid var(--accent); border-radius:6px var(--r-sm) var(--r-sm) 6px}
+.tip{border-left:3px solid var(--accent); padding:4px 0 4px 12px; background:linear-gradient(90deg,var(--accent-soft),transparent 70%); border-radius:0 8px 8px 0}
+
+/* títulos de seção: kanji como selo vertical */
+.sechead{align-items:center; gap:12px; padding-top:4px}
+.sechead h1{font-size:1.9rem; letter-spacing:.02em}
+.sechead .jp{order:-1; display:block; width:calc(1em + 12px); padding:5px 6px; font-size:1rem; line-height:1.1; text-align:center; word-break:break-all;
+  border:1.5px solid var(--accent); border-radius:6px; color:var(--accent); background:color-mix(in srgb,var(--accent) 7%,transparent); transform:rotate(-3deg)}
+#hello{position:relative}
+#hello::after{position:absolute; right:0; top:-6px; font-family:var(--display); font-weight:800; font-size:4.2rem; line-height:1; color:var(--accent); opacity:.07; pointer-events:none}
+body.lang-ja #hello::after{content:"日本語"}
+body.lang-de #hello::after{content:"独逸語"}
+.hello h1{font-size:2rem; letter-spacing:.02em}
+.eyebrow{display:inline-flex; align-items:center; gap:8px; letter-spacing:.14em}
+.eyebrow::before{content:""; width:14px; height:1.5px; background:var(--accent)}
+
+/* botões: altura confortável, toque tátil, hierarquia clara */
+.btn{border:1px solid var(--line); background:var(--surface); border-radius:var(--r-sm); min-height:46px; padding:10px 18px; font-weight:600;
+  transition:transform .12s var(--ease), box-shadow .2s var(--ease), background .2s, border-color .2s; box-shadow:0 1px 1px rgba(22,30,44,.04)}
+.btn:hover:not(:disabled){border-color:color-mix(in srgb,var(--accent) 45%,var(--line))}
+.btn:active:not(:disabled){transform:translateY(1px) scale(.99)}
+.btn.primary{background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 88%,#fff),var(--accent)); border-color:color-mix(in srgb,var(--accent) 80%,#000);
+  box-shadow:0 1px 0 rgba(255,255,255,.25) inset, 0 6px 16px -8px color-mix(in srgb,var(--accent) 80%,transparent); letter-spacing:.01em}
+.btn.primary:hover:not(:disabled){box-shadow:0 1px 0 rgba(255,255,255,.25) inset, 0 10px 22px -8px color-mix(in srgb,var(--accent) 85%,transparent)}
+.btn.ghost{border-color:transparent; box-shadow:none; color:var(--muted)}
+.btn.ghost:hover:not(:disabled){background:var(--sunk); color:var(--ink)}
+.btn.small{min-height:38px; padding:6px 14px; border-radius:10px}
+.iconbtn{border:1px solid var(--hair); background:var(--sunk); width:42px; height:42px; transition:background .2s, transform .12s var(--ease)}
+.iconbtn:hover{background:var(--accent-soft); color:var(--accent)}
+.iconbtn:active{transform:scale(.94)}
+.linkbtn{color:var(--accent); font-weight:600; font-size:.84rem; text-decoration-thickness:1px}
+.linkbtn:hover{color:var(--ink)}
+
+/* pomodoro: o ensō é o centro do Hoje */
+.pomo{padding:18px; gap:14px; position:relative; overflow:hidden}
+.pomo::after{content:""; position:absolute; right:-40px; top:-40px; width:160px; height:160px; border-radius:50%;
+  background:radial-gradient(circle, var(--accent-soft), transparent 70%); pointer-events:none; opacity:.8}
+.pomo > *{position:relative; z-index:1}
+.enso .ring{filter:drop-shadow(0 2px 3px color-mix(in srgb,var(--accent) 35%,transparent))}
+.blockname{font-family:var(--display); font-size:1.2rem}
+.controls .btn.primary{min-height:52px; font-size:1.05rem}
+
+/* metas */
+.goal .mark{border-radius:50%; border-width:1.5px}
+.goal.done .mark{box-shadow:0 0 0 3px var(--accent-soft)}
+
+/* exercícios: opções com tecla, ícone de certo/errado e alvo grande */
+.ex-card{padding:18px; gap:16px}
+.ex-card .prompt{padding:6px 2px}
+.opts{gap:10px}
+.opt{background:var(--surface); border:1.5px solid var(--line); border-radius:14px; padding:14px 16px; min-height:54px;
+  transition:border-color .15s, background .15s, transform .12s var(--ease), box-shadow .2s}
+.opt:hover:not(:disabled){border-color:var(--accent); box-shadow:0 6px 16px -10px color-mix(in srgb,var(--accent) 70%,transparent)}
+.opt:active:not(:disabled){transform:scale(.985)}
+.opt:disabled{cursor:default}
+.opt.right,.opt.wrong{padding-right:40px}
+.opt.right::before,.opt.wrong::before{position:absolute; right:12px; top:50%; transform:translateY(-50%); width:22px; height:22px; border-radius:50%;
+  display:grid; place-items:center; font-size:.8rem; font-weight:900; color:#fff; text-decoration:none}
+.opt.right::before{content:"✓"; background:var(--ok)}
+.opt.wrong::before{content:"✕"; background:var(--bad)}
+@media (min-width:980px){ .opt.right[data-k]::after,.opt.wrong[data-k]::after{display:none} }
+.opt:disabled:not(.right):not(.wrong){opacity:.55}
+.feedback{border-radius:14px; padding:14px 16px; border-left:4px solid}
+.feedback.ok{border-color:var(--ok)} .feedback.no{border-color:var(--bad)}
+.feedback .verdict{display:flex; align-items:center; gap:8px}
+.feedback.ok .verdict::before{content:"✓"} .feedback.no .verdict::before{content:"✕"}
+.tok{background:var(--surface); border:1.5px solid var(--line); border-radius:12px; transition:transform .12s var(--ease), border-color .15s}
+.tok:hover:not(:disabled){border-color:var(--accent)}
+.tok:active:not(:disabled){transform:scale(.96)}
+.built{background:color-mix(in srgb,var(--sunk) 60%,transparent); border-radius:14px}
+.progressline{height:5px; background:var(--sunk)}
+.progressline i{background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 70%,#fff),var(--accent))}
+textarea,input[type=text],input[type=date],input[type=time],select{background:var(--surface); border:1.5px solid var(--line); border-radius:12px; transition:border-color .15s, box-shadow .15s}
+input[type=time]{width:100%; padding:10px 12px; font-size:1.05rem}
+textarea:focus,input:focus,select:focus{border-color:var(--accent); box-shadow:0 0 0 4px var(--accent-soft); outline:none}
+textarea:focus-visible,input:focus-visible,select:focus-visible{outline:none}
+
+/* controles segmentados: rolam com borda esmaecida no celular */
+.segctl{background:var(--sunk); border:1px solid var(--hair); border-radius:14px; scroll-snap-type:x proximity; scrollbar-width:none}
+.segctl::-webkit-scrollbar{display:none}
+.segctl button{scroll-snap-align:start; border-radius:10px; transition:background .15s, color .15s; color:var(--muted)}
+.segctl button[aria-selected="true"]{color:var(--ink); box-shadow:0 1px 2px rgba(22,30,44,.1), 0 0 0 1px var(--hair)}
+.segctl button[aria-selected="true"]::after{content:""; display:block; height:2px; margin:3px auto -2px; width:18px; border-radius:2px; background:var(--accent)}
+@media (max-width:600px){
+  .segctl{-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent); mask-image:linear-gradient(90deg,#000 88%,transparent)}
+  .segctl.daypick{-webkit-mask-image:none; mask-image:none}
+}
+.daypick button[aria-pressed="true"]::after{display:none}
+
+/* listas */
+.errlist li{padding:12px 0}
+.points li button{border-radius:12px; transition:background .15s}
+.textlist button{border:1px solid var(--hair); box-shadow:var(--shadow); border-radius:16px; padding:14px; transition:transform .15s var(--ease), box-shadow .2s}
+.textlist button:hover{transform:translateY(-2px); box-shadow:var(--shadow-lift); border-color:var(--hair)}
+.stat{background:var(--surface); border:1px solid var(--hair); box-shadow:var(--shadow); border-radius:16px; padding:12px 14px}
+.stat b{color:var(--accent)}
+.chip{letter-spacing:.02em}
+.unit-head .dot{box-shadow:0 0 0 4px var(--surface)}
+
+/* barra superior e abas do celular */
+.topbar{background:linear-gradient(180deg,var(--ai-2),var(--ai)); box-shadow:0 6px 18px -12px rgba(0,0,0,.5)}
+@media (max-width:979px){
+  .bottombar{left:10px; right:10px; bottom:calc(8px + env(safe-area-inset-bottom,0px)); padding:6px; border-radius:22px;
+    background:color-mix(in srgb,var(--surface) 86%,transparent); border:1px solid var(--hair); box-shadow:var(--shadow-lift);
+    -webkit-backdrop-filter:saturate(1.4) blur(14px); backdrop-filter:saturate(1.4) blur(14px)}
+  .bottombar button{border-radius:16px; padding:7px 0 5px; transition:background .2s, color .2s}
+  .bottombar button[aria-selected="true"]{background:var(--accent-soft)}
+  .bottombar button[aria-selected="true"]::before{display:none}
+  .main{padding-bottom:150px}
+  .gtoast{bottom:calc(150px + env(safe-area-inset-bottom,0px))}
+}
+
+/* ação principal ao alcance do polegar (só celular) */
+.fab{position:fixed; z-index:25; left:50%; transform:translateX(-50%); bottom:calc(84px + env(safe-area-inset-bottom,0px));
+  display:inline-flex; align-items:center; gap:10px; max-width:calc(100vw - 32px); min-height:50px; padding:10px 20px 10px 14px; border-radius:999px;
+  border:1px solid color-mix(in srgb,var(--accent) 80%,#000); color:#fff; font-weight:700; font-size:1rem; white-space:nowrap;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 88%,#fff),var(--accent)); box-shadow:0 12px 28px -10px color-mix(in srgb,var(--accent) 90%,transparent)}
+body.lang-de .fab{color:#1B1E24}
+.fab .fab-ic{width:28px; height:28px; border-radius:50%; display:grid; place-items:center; background:rgba(255,255,255,.22); font-size:.85rem}
+.fab .fab-t{font-family:var(--display); font-variant-numeric:tabular-nums}
+.fab:active{transform:translateX(-50%) scale(.97)}
+@media (min-width:980px){ .fab{display:none!important} }
+
+.pomo.compact .controls .btn{white-space:nowrap; padding-inline:12px; font-size:.88rem}
+/* computador */
+@media (min-width:980px){
+  .rail .pomo-top{flex-direction:column; text-align:center; gap:10px}
+  .rail .pomo-info{align-items:center}
+  .rail .seglabels{justify-content:center}
+  .rail .controls .btn{white-space:nowrap}
+  .sidenav button{border-radius:12px; padding:11px 14px}
+  .rail .card,.rail .pomo{box-shadow:var(--shadow)}
+}
+@media (prefers-reduced-motion:reduce){ .btn:active,.opt:active,.tok:active,.fab:active{transform:none} .textlist button:hover{transform:none} }
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -484,6 +664,7 @@ body.lang-de .reader .rline{font-size:1.1rem; line-height:1.8}
   </nav>
 </div>
 
+<button id="fab" class="fab" type="button" hidden><span class="fab-ic" aria-hidden="true">▶</span><span class="fab-t"></span></button>
 <div id="gtoast" class="gtoast" role="status" hidden></div>
 <div hidden>
   <div class="pomo" id="pomo" aria-live="polite">
@@ -5226,6 +5407,7 @@ function record(p, kind, ok, ms, opt){
   if(it.srsDia!==TODAY){ schedule(it, ratingOf(kind, ok, grade)); it.srsDia=TODAY; }
   else if(!ok){ migrateItem(it); if(it.S) it.S=Math.round(clampS(fsrsShort(it.S,1))*100)/100; it.vence=addDays(TODAY,1); it.reps=0; it.intervalo=1; }
   it.ultima=TODAY; it.mod=Date.now();
+  if(!ok && p.kind && !it.leech && isLeech(it)){ it.leech=TODAY; toast("Palavra difícil: "+p.t+". Crie um gancho de memória em Revisar > Palavras sanguessuga."); }
   saveItem(it);
   eloUpdate(p.lang, COMP_OF[kind]||"gramatica", DIFF[p.lvl]||250, ok, kind);
   if(ok){
@@ -5773,7 +5955,7 @@ function exampleRows(v){
 function vocabReveal(v, ok, verdict){
   return h("div",{class:"feedback "+(ok?"ok":"no")},
     h("div",{class:"verdict",text:verdict||(ok?"Certo":"A resposta era:")}),
-    vocabFace(v,false), kanjiChips(v), ...exampleRows(v));
+    vocabFace(v,false), kanjiChips(v), mnemoLine(v), ...exampleRows(v));
 }
 
 /* ---------- exercícios de palavra ---------- */
@@ -6399,11 +6581,20 @@ Responda SEMPRE só com JSON: {"fala":"sua fala","leitura":"${l==="ja"?"fala em 
    Leitura com glossário (tocar na palavra)
    ========================================================= */
 const TEMAS=["cotidiano","trabalho","notícia leve","saúde","tecnologia","cultura e viagem"];
+/* palavras que o aluno já viu (as mais firmes primeiro): base da leitura i+1 */
+function knownWords(l, max){
+  return Object.values(store.items[l]).filter(it=>{ const v=C[l].byId[it.id]; return v && v.kind==="vocab" && it.estado>=2 && !it.suspenso; })
+    .sort((a,b)=>(b.S||0)-(a.S||0)).slice(0,max||400).map(it=>C[l].byId[it.id]);
+}
+const I1_MIN=30;
 function readerView(l){
   const wrap=h("div",{class:"stack"});
   const lvlSel=h("select",{id:"rd-lvl"}, (l==="ja"?["N3","N2"]:["A2","B1","B2"]).map(v=>h("option",{value:v,text:v})));
   lvlSel.value = courseLevel(l)==="concluído" ? (l==="ja"?"N2":"B2") : courseLevel(l);
   const temaSel=h("select",{id:"rd-tema"}, TEMAS.map(t=>h("option",{value:t,text:t})));
+  const kw=knownWords(l), i1ok=kw.length>=I1_MIN;
+  const modeSel=h("select",{id:"rd-modo"}, h("option",{value:"i1",text:"i+1: com as minhas palavras"}), h("option",{value:"nivel",text:"Texto do nível"}));
+  modeSel.value = i1ok ? "i1" : "nivel";
   const own=h("textarea",{id:"rd-own",rows:"3",lang:l,placeholder:"Opcional: cole aqui um texto seu (ex.: notícia do bot de idiomas) para ler com glossário"});
   const gen=h("button",{class:"btn primary",type:"button",text:"Gerar leitura"});
   const st=h("p",{class:"small muted"});
@@ -6411,13 +6602,18 @@ function readerView(l){
   if(!aiReady()){ wrap.append(h("div",{class:"card"},h("p",{text:"A leitura com glossário precisa do professor (Claude) liberado nesta visualização."}))); return wrap; }
   wrap.append(h("div",{class:"card stack"},
     h("p",{class:"small",text:"Toque em qualquer palavra para ver leitura e significado; a que você não souber vira item de revisão. Lendo bastante no seu nível, a leitura fica mais rápida (Nakanishi, 2015)."}),
-    h("div",{class:"row"}, h("label",{class:"small",for:"rd-lvl",text:"Nível"}), lvlSel, h("label",{class:"small",for:"rd-tema",text:"Tema"}), temaSel),
+    h("div",{class:"row"}, h("label",{class:"small",for:"rd-modo",text:"Modo"}), modeSel, h("label",{class:"small",for:"rd-lvl",text:"Nível"}), lvlSel, h("label",{class:"small",for:"rd-tema",text:"Tema"}), temaSel),
+    h("p",{class:"small muted",text: i1ok ? "i+1 usa as "+kw.length+" palavras que você já viu e só 3 a 5 novas (sublinhadas): perto dos 98 % de palavras conhecidas em que a leitura flui sem dicionário (Hu e Nation, 2000)."
+      : "O modo i+1 (texto feito só com as suas palavras + 3 a 5 novas) fica bom a partir de "+I1_MIN+" palavras vistas; você tem "+kw.length+". Até lá, ele mistura as suas com palavras básicas do nível."}),
     own, h("div",{class:"row"}, gen), st), out);
   gen.addEventListener("click", async ()=>{
     gen.disabled=true; out.innerHTML=""; st.textContent="Preparando o texto e o glossário… (20 a 60 segundos)";
     const lr=learned(l).slice(-6);
     const base = own.value.trim()
       ? `Use EXATAMENTE este texto (corrija só erros de digitação óbvios; se for longo, use as primeiras 8 frases):\n"""${own.value.trim().slice(0,2500)}"""`
+      : modeSel.value==="i1"
+      ? `Escreva um texto original de 6 a 8 frases curtas, tema: ${temaSel.value}, no estilo i+1. O aluno JÁ conhece estas palavras: ${kw.map(v=>v.w).join(l==="ja"?"、":", ")}.
+Use quase só essas palavras, partículas/artigos/conjunções e palavras muito básicas (${l==="ja"?"N5":"A1"}). Inclua exatamente 3 a 5 palavras de conteúdo NOVAS, úteis para o nível ${lvlSel.value}, e marque cada segmento dessas palavras com "novo":true. O texto deve ser fácil de entender pelo contexto. ${lr.length?"Use naturalmente alguns destes pontos de gramática: "+lr.map(p=>p.t).join(", ")+".":""}`
       : `Escreva um texto original de 6 a 8 frases, nível ${lvlSel.value}, tema: ${temaSel.value}. ${lr.length?"Use naturalmente alguns destes pontos: "+lr.map(p=>p.t).join(", ")+".":""}`;
     const prompt=`Prepare uma leitura com glossário em ${LANGNAME[l]} para um aluno brasileiro (${levelLine(l)}).
 ${base}
@@ -6426,13 +6622,22 @@ Responda só com JSON: {"titulo":"...","frases":[{"seg":[{"s":"...","r":"...","m
     try{
       const r=await sampleFn.json(prompt,{cache:false});
       if(!r || !Array.isArray(r.frases) || !r.frases.length) throw {code:"invalid_json"};
-      st.textContent=""; renderReading(out, l, r);
+      st.textContent=""; renderReading(out, l, r, own.value.trim() ? null : modeSel.value);
     }catch(e){ st.textContent=aiError(e)||""; }
     gen.disabled=false;
   });
   return wrap;
 }
-function renderReading(out, l, r){
+/* cobertura estimada: entre os segmentos com significado, quantos estão nas suas palavras
+   e quantos o professor marcou como novos */
+function readingCoverage(l, r){
+  const known=new Set(); knownWords(l,5000).forEach(v=>{ known.add(v.w); if(v.r) known.add(v.r); known.add(String(v.w).toLowerCase()); });
+  let tokens=0, nov=0, mine=0;
+  r.frases.forEach(f=>(f.seg||[]).forEach(sg=>{ if(!sg || !sg.s || /^[\s。、，．！？!?,.「」『』:;…-]+$/.test(sg.s)) return; tokens++;
+    if(sg.novo) nov++; else if(sg.m && [sg.b, sg.s].some(x=>x && (known.has(x) || known.has(String(x).toLowerCase())))) mine++; }));
+  return {tokens, nov, mine, pct: tokens ? Math.round((1-nov/tokens)*100) : null};
+}
+function renderReading(out, l, r, mode){
   let furi=false;
   const card=h("div",{class:"card stack reader"});
   const pop=h("div",{class:"wpop",hidden:true});
@@ -6449,7 +6654,7 @@ function renderReading(out, l, r){
       if(!sg || !sg.s) return;
       if(!sg.m){ line.append(document.createTextNode(sg.s+(l==="de"&&/\w$/.test(sg.s)?" ":""))); return; }
       const el = (l==="ja" && sg.r && hasKanji(sg.s)) ? h("ruby",{}, sg.s, h("rt",{text:sg.r})) : document.createTextNode(sg.s);
-      const w=h("button",{class:"tokw",type:"button"}, el);
+      const w=h("button",{class:"tokw"+(sg.novo?" nova":""),type:"button"}, el);
       w.addEventListener("click",()=>showPop(sg, text, f.t||"", w));
       line.append(w); if(l==="de") line.append(document.createTextNode(" "));
     });
@@ -6458,25 +6663,35 @@ function renderReading(out, l, r){
     sents.push(text);
   });
   card.append(pop);
+  if(mode==="i1"){
+    const cv=readingCoverage(l, r), novas=[];
+    r.frases.forEach(f=>{ const segs=Array.isArray(f.seg)?f.seg:[]; const text=segs.map(s=>s.s||"").join(""); segs.forEach(sg=>{ if(sg && sg.novo && sg.m && !novas.find(x=>x.sg.s===sg.s)) novas.push({sg, text, t:f.t||""}); }); });
+    const addAll=h("button",{class:"btn small",type:"button",text:"Estudar as "+novas.length+" novas",onclick:()=>{ novas.forEach(x=>addWord(x.sg, x.text, x.t)); addAll.disabled=true; addAll.textContent="Adicionadas: voltam amanhã na revisão"; }});
+    card.prepend(h("div",{class:"cover small"},
+      h("span",{}, h("b",{text:(cv.pct==null?"–":cv.pct+" %")}), " de palavras conhecidas previstas · "+cv.mine+" do seu vocabulário · "+cv.nov+" nova"+(cv.nov!==1?"s":"")+" (sublinhadas)"),
+      novas.length ? addAll : null));
+  }
   out.append(card);
+  function addWord(sg, sentence, trad){
+    const base=sg.b||sg.s; let v=C[l].vocab.find(x=>x.w===base || x.w===sg.s);
+    if(!v){
+      const isKana=/^[\u3040-\u30ffー]+$/.test(base);
+      const d = l==="ja" ? {lang:l,lvl:"leitura",w:base,r:(base===sg.s ? (sg.r||"") : (isKana?base:"")),m:sg.m,ex:sentence,exr:"",ext:trad,criado:TODAY}
+                         : {lang:l,lvl:"leitura",a:"",w:base,pl:"",m:sg.m,ex:sentence,ext:trad,criado:TODAY};
+      d.id="vx-"+l+"-"+(l==="ja"?base:slug(base)+"-x");
+      store.vocabExtra[d.id]=d; write("vocabExtra",d.id,d); addExtraVocab([d]); v=C[l].byId[d.id];
+    }
+    const it=getItem(v); if(it && it.estado>=2) return v;
+    introduce(v); if(S) S.newWords=(S.newWords||[]).concat([v]);
+    return v;
+  }
   function showPop(sg, sentence, trad, anchor){
     const base=sg.b||sg.s, exists=C[l].vocab.find(v=>v.w===base || v.w===sg.s);
     const it=exists?getItem(exists):null;
     pop.hidden=false; pop.innerHTML="";
     const add=h("button",{class:"btn small primary",type:"button",text: exists ? (it&&it.estado>=2?"Já está nas suas palavras":"Estudar esta palavra") : "Adicionar às minhas palavras"});
     if(exists && it && it.estado>=2) add.disabled=true;
-    add.addEventListener("click",()=>{
-      let v=exists;
-      if(!v){
-        const isKana=/^[\u3040-\u30ffー]+$/.test(base);
-        const d = l==="ja" ? {lang:l,lvl:"leitura",w:base,r:(base===sg.s ? (sg.r||"") : (isKana?base:"")),m:sg.m,ex:sentence,exr:"",ext:trad,criado:TODAY}
-                           : {lang:l,lvl:"leitura",a:"",w:base,pl:"",m:sg.m,ex:sentence,ext:trad,criado:TODAY};
-        d.id="vx-"+l+"-"+(l==="ja"?base:slug(base)+"-x");
-        store.vocabExtra[d.id]=d; write("vocabExtra",d.id,d); addExtraVocab([d]); v=C[l].byId[d.id];
-      }
-      introduce(v); add.textContent="Adicionada: volta amanhã na revisão"; add.disabled=true;
-      if(S) S.newWords=(S.newWords||[]).concat([v]);
-    });
+    add.addEventListener("click",()=>{ addWord(sg, sentence, trad); add.textContent="Adicionada: volta amanhã na revisão"; add.disabled=true; });
     pop.append(h("div",{class:"row",style:"align-items:baseline"}, h("b",{lang:l,style:"font-size:1.3rem",text:sg.s}),
         l==="ja"&&sg.r ? h("span",{class:"kana",lang:"ja",text:sg.r}) : null, h("span",{class:"spacer"}),
         iconBtn("play","Ouvir",()=>speak(l==="ja"?(sg.r||sg.s):sg.s,l,{rate:0.85})),
@@ -7008,6 +7223,267 @@ function toast(msg){ const t=$("#gtoast"); if(!t) return; t.textContent=msg||"";
 function stageSet(...els){ const st=$("#stage"); st.innerHTML=""; exBusy=false; els.forEach(e=>e&&st.append(e)); }
 
 /* dias desde o último dia estudado (qualquer idioma); null se nunca estudou */
+/* ---------- plano se-então (implementation intentions) ----------
+   "Se for [hora], depois de [gatilho], então abro o app" liga o estudo a uma pista do dia;
+   metanálise: efeito médio-grande na execução de metas (Gollwitzer e Sheeran, 2006).
+   O plano B ("se eu estiver cansado, então…") é o plano para o obstáculo. */
+const WD=["dom","seg","ter","qua","qui","sex","sáb"], ICS_DAY=["SU","MO","TU","WE","TH","FR","SA"];
+const PLANO_B={curta:"faço a sessão curta de 10 min", revisao:"faço só as revisões vencidas", poema:"ouço e leio um poema em voz alta"};
+function plano(){ const p=settings.plano; return p && p.hora && Array.isArray(p.dias) && p.dias.length ? p : null; }
+function planoText(p){ return "Se for "+p.hora+(p.gatilho?", "+p.gatilho:"")+", então abro o Language Master e começo o pomodoro."; }
+function planoNow(){
+  const p=plano(); if(!p || studiedOn(TODAY)) return null;
+  const now=new Date(), wd=now.getDay(); if(!p.dias.includes(wd)) return null;
+  const [hh,mm]=p.hora.split(":").map(Number), min=now.getHours()*60+now.getMinutes(), at=hh*60+(mm||0);
+  if(min<at-10) return null;
+  return min>at+120 ? "tarde" : "hora";
+}
+function planoForm(onSave){
+  const p=Object.assign({hora:"20:00", gatilho:"", dias:[0,1,2,3,4,5,6], b:"curta"}, settings.plano||{});
+  const hora=h("input",{type:"time",id:"pl-hora",value:p.hora});
+  const gat=h("input",{type:"text",id:"pl-gat",value:p.gatilho||"",placeholder:"Ex.: depois do jantar, no ônibus, ao chegar do trabalho",autocomplete:"off"});
+  const dias=new Set(p.dias);
+  const dayBox=h("div",{class:"segctl daypick",role:"group","aria-label":"Dias"});
+  WD.forEach((t,i)=>dayBox.append(h("button",{type:"button","aria-pressed":String(dias.has(i)),text:t,onclick:e=>{ dias.has(i)?dias.delete(i):dias.add(i); e.currentTarget.setAttribute("aria-pressed",String(dias.has(i))); }})));
+  const bSel=h("select",{id:"pl-b"}, Object.entries(PLANO_B).map(([v,t])=>h("option",{value:v,text:t}))); bSel.value=p.b||"curta";
+  const st=h("p",{class:"small muted"});
+  return h("div",{class:"stack"},
+    h("label",{class:"stack",style:"gap:4px"}, h("span",{class:"small",text:"Se for (hora)"}), hora),
+    h("label",{class:"stack",style:"gap:4px"}, h("span",{class:"small",text:"…e logo depois de (uma coisa que você já faz todo dia)"}), gat),
+    h("div",{class:"stack",style:"gap:4px"}, h("span",{class:"small",text:"Nos dias"}), dayBox),
+    h("label",{class:"stack",style:"gap:4px"}, h("span",{class:"small",text:"Plano B: se eu estiver cansado ou sem tempo, então…"}), bSel),
+    h("div",{class:"row"}, h("button",{class:"btn primary",type:"button",text:"Salvar plano",onclick:()=>{
+      if(!hora.value || !dias.size){ st.textContent="Escolha a hora e pelo menos um dia."; return; }
+      settings.plano={hora:hora.value, gatilho:gat.value.trim(), dias:[...dias].sort(), b:bSel.value, criado:(settings.plano&&settings.plano.criado)||TODAY};
+      saveSettings(); onSave && onSave(); }})), st);
+}
+function icsFor(p){
+  const z=n=>String(n).padStart(2,"0"), now=new Date();
+  const stamp=now.getUTCFullYear()+z(now.getUTCMonth()+1)+z(now.getUTCDate())+"T"+z(now.getUTCHours())+z(now.getUTCMinutes())+"00Z";
+  // primeiro dia do plano a partir de amanhã (hora local "flutuante": a agenda usa o fuso dela)
+  let d=addDays(TODAY,1); for(let k=0;k<7 && !p.dias.includes(new Date(d+"T12:00").getDay());k++) d=addDays(d,1);
+  const [hh,mm]=p.hora.split(":");
+  const esc=s=>String(s).replace(/[\;,]/g,m=>"\\"+m).replace(/\n/g,"\\n");
+  const desc=planoText(p)+"\nPlano B: se estiver cansado ou sem tempo, "+PLANO_B[p.b||"curta"]+".\nhttps://claude.ai/artifact/GPoEsdsqijkeoYm6TjcHcJ";
+  return ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Language Master//PT-BR","CALSCALE:GREGORIAN","BEGIN:VEVENT",
+    "UID:lm-plano-"+Date.now()+"@language-master","DTSTAMP:"+stamp,"DTSTART:"+d.replace(/-/g,"")+"T"+hh+mm+"00","DURATION:PT25M",
+    "RRULE:FREQ=WEEKLY;BYDAY="+p.dias.map(i=>ICS_DAY[i]).join(","),
+    "SUMMARY:"+esc("語 Language Master: pomodoro de idiomas"),"DESCRIPTION:"+esc(desc),
+    "BEGIN:VALARM","ACTION:DISPLAY","DESCRIPTION:"+esc(p.gatilho?"Depois de "+p.gatilho+": hora do pomodoro":"Hora do pomodoro"),"TRIGGER:PT0M","END:VALARM",
+    "END:VEVENT","END:VCALENDAR"].join("\r\n");
+}
+async function planoICS(st){
+  const p=plano(); if(!p) return;
+  st.className="status"; st.textContent="Gerando o evento…";
+  try{
+    const dl=await claude.use("downloads");
+    if(!dl){ st.className="status warn"; st.textContent="Download indisponível nesta visualização. Abra pelo link do app."; return; }
+    await dl.save({filename:"language-master-plano.ics", data:icsFor(p)});
+    st.className="status ok"; st.textContent="Abra o arquivo .ics: o Google Agenda, o Calendário do iPhone e o Outlook criam o evento semanal com alerta.";
+  }catch(e){ st.className="status warn"; st.textContent= e && e.code==="declined" ? "Download cancelado." : "Não consegui gerar o arquivo."; }
+}
+/* cartão do plano: no Hoje (compacto) e no Progresso (completo) */
+function planoCard(compact, rerender, onB){
+  const p=plano(), card=h("div",{class:compact?"plano stack":"card stack"}), st=h("div",{class:"status",role:"status"});
+  const edit=()=>{ card.innerHTML=""; card.append(h("h3",{text:"Seu plano se-então"}), planoForm(()=>{ (rerender||(()=>{}))(); })); };
+  if(!p){
+    card.append(h("div",{}, h("b",{text:"Monte seu plano se-então (1 min). "}), h("span",{class:"small",text:"Decidir hora e gatilho antes aumenta a chance de estudar de verdade (Gollwitzer e Sheeran, 2006)."})),
+      h("div",{class:"row"}, h("button",{class:"btn small primary",type:"button",text:"Montar plano",onclick:edit})));
+    return card;
+  }
+  const when=planoNow();
+  card.append(
+    when==="hora" ? h("div",{class:"small",style:"font-weight:700;color:var(--accent)",text:"É a sua hora"+(p.gatilho?": "+p.gatilho:"")+"."}) : null,
+    when==="tarde" ? h("div",{class:"row small"}, h("span",{style:"font-weight:700;color:var(--warn)",text:"Passou da hora do plano. Vale o plano B: "+PLANO_B[p.b||"curta"]+"."}),
+      onB ? h("button",{class:"btn small",type:"button",text:"Fazer o plano B",onclick:()=>onB(p.b||"curta")}) : null) : null,
+    h("div",{class:"small"}, h("b",{text:"Plano: "}), planoText(p)+" ", h("span",{class:"muted",text:"Plano B: "+PLANO_B[p.b||"curta"]+". Dias: "+p.dias.map(i=>WD[i]).join(", ")+"."})),
+    h("div",{class:"row"},
+      h("button",{class:"linkbtn",type:"button",text:"Adicionar à agenda (.ics)",onclick:()=>planoICS(st)}),
+      h("button",{class:"linkbtn",type:"button",text:"editar",onclick:edit})), st);
+  return card;
+}
+
+/* ---------- sanguessugas: palavras que você erra sempre ----------
+   Depois de 3 esquecimentos no FSRS (ou 4 erros com mais erros que acertos) a palavra
+   ganha um gancho de memória pelo método da palavra-chave: um som parecido em português
+   + uma cena que liga esse som ao significado (Atkinson e Raugh, 1975). */
+function isLeech(it){ return !!it && !it.suspenso && ((it.lapsos||0)>=3 || ((it.erros||0)>=4 && (it.erros||0)>(it.acertos||0))); }
+function leeches(l){ return Object.values(store.items[l]).filter(it=>{ const v=C[l].byId[it.id]; return v && v.kind && isLeech(it); })
+  .sort((a,b)=>(b.erros||0)-(a.erros||0)).map(it=>C[l].byId[it.id]); }
+function mnemoLine(v){ const it=getItem(v); return it && it.mnemo ? h("div",{class:"mnemo small"}, h("b",{text:"Gancho: "}), it.mnemo) : null; }
+async function genMnemo(v){
+  const l=v.lang, k=v.kind==="kanji";
+  const som = l==="ja" ? (k ? v.on+" / "+v.kun : v.r) : v.w;
+  const prompt=`Crie um gancho de memória pelo método da palavra-chave (Atkinson e Raugh) para um aluno brasileiro de ${LANGNAME[l]} que erra sempre este item.
+Item: ${k?"kanji "+v.k+" (on: "+v.on+", kun: "+v.kun+")":v.t+(l==="ja"?" (leitura "+v.r+")":"")} = ${v.m}.
+1) "chave": uma palavra ou expressão curta em PORTUGUÊS com som parecido com "${som}".
+2) "cena": uma cena visual curta, concreta e um pouco absurda (até 25 palavras) que junta a palavra-chave e o significado "${v.m}".${k?'\n3) "partes": as partes visuais (radicais) do kanji e como elas lembram o significado, em até 15 palavras.':""}
+Responda só com JSON: {"chave":"...","cena":"..."${k?',"partes":"..."':""}}`;
+  const r=await sampleFn.json(prompt,{cache:false});
+  if(!r || typeof r.cena!=="string") throw {code:"invalid_json"};
+  return (r.chave?"“"+r.chave+"” → ":"")+r.cena+(r.partes?" · Partes: "+r.partes:"");
+}
+function saveMnemo(v, text){ const it=ensureItem(v); it.mnemo=String(text||"").trim().slice(0,300)||null; it.mod=Date.now(); saveItem(it); }
+function leechView(l){
+  const list=leeches(l).slice(0,12), box=h("div",{class:"card stack"});
+  box.append(h("h3",{text:"Palavras sanguessuga"}),
+    h("p",{class:"small muted",text:"Palavras que você esqueceu 3 vezes ou mais. Repetir mais não resolve: um gancho de memória sim. O gancho aparece toda vez que a palavra voltar na revisão."}));
+  if(!list.length) return null;
+  const ul=h("ul",{class:"errlist"});
+  list.forEach(v=>{
+    const it=getItem(v), st=h("span",{class:"small muted"});
+    const ta=h("textarea",{id:"mn-"+v.id.replace(/[^\w-]/g,"_"),rows:"2",placeholder:"Seu gancho: som parecido em português + uma cena com o significado",value:it.mnemo||""});
+    ta.value=it.mnemo||"";
+    const gen=aiReady() ? h("button",{class:"btn small",type:"button",text:"Criar gancho (Claude)",onclick:async e=>{
+      const b=e.currentTarget; b.disabled=true; st.textContent="Pensando…";
+      try{ ta.value=await genMnemo(v); saveMnemo(v, ta.value); st.textContent="Salvo. Edite se quiser deixar mais seu."; }catch(err){ st.textContent=aiError(err)||""; }
+      b.disabled=false; }}) : null;
+    ul.append(h("li",{class:"stack",style:"gap:6px"},
+      h("div",{class:"row",style:"align-items:baseline"}, h("b",{lang:l,style:"font-size:1.2rem",text:v.t}), l==="ja"&&v.r&&v.r!==v.w?h("span",{class:"kana",lang:"ja",text:v.r}):null, h("span",{text:"= "+v.m}), h("span",{class:"spacer"}),
+        h("span",{class:"small muted",text:(it.erros||0)+" erros · "+(it.lapsos||0)+" esquecimentos"}), playBtns(l, vSay(v), "")),
+      ta, h("div",{class:"row"}, gen, h("button",{class:"btn small ghost",type:"button",text:"Salvar o meu",onclick:()=>{ saveMnemo(v, ta.value); st.textContent="Salvo."; }}), st)));
+  });
+  box.append(ul);
+  return box;
+}
+
+/* ---------- pré-teste: chutar antes da aula ----------
+   Tentar responder antes de estudar, mesmo errando, fixa mais que só estudar
+   pelo mesmo tempo (Richland, Kornell e Kao, 2009). Não conta para a revisão. */
+const pretested=new Set();
+function pretestView(p, box, then){
+  if(pretested.has(p.id) || (getItem(p) && getItem(p).estado>=2) || p.q.length<3){ then(); return; }
+  pretested.add(p.id);
+  const res=[];
+  box.append(h("div",{class:"tip small"}, h("b",{text:"Chute primeiro. "}), "Duas perguntas sobre o ponto novo antes da aula. Errar aqui é esperado e ajuda a aula a fixar (Richland et al., 2009). Não conta na revisão.",
+    " ", h("button",{class:"linkbtn",type:"button",text:"pular o chute",onclick:()=>{ box.innerHTML=""; then(); }})));
+  const run=h("div"); box.append(run);
+  runSeq(run, [p.q[2], p.q[0]].map(q=>d=>exMC(p,q,d,"Chute",ok=>res.push(ok))), ()=>{
+    const n=res.filter(Boolean).length;
+    box.innerHTML="";
+    box.append(h("p",{class:"small tip",text: n===2 ? "Acertou os dois no chute. Leia a aula com calma; se já souber, o teste rápido para pular está no fim dela." : "Acertou "+n+" de 2 no chute. Agora a aula: repare na forma que estava certa."}));
+    then();
+  }, {noScroll:true});
+}
+
+/* ---------- treino do banco de erros (Claude) ----------
+   Exercícios novos feitos a partir dos SEUS erros: a forma que você usou entra como opção errada,
+   lado a lado com a certa (contraste do que é parecido). */
+async function genErrorDrill(l, errs){
+  const pts=[...new Set(errs.map(e=>e.conteudo).filter(id=>C[l].byId[id] && !C[l].byId[id].kind))];
+  const prompt=`Crie 6 exercícios de múltipla escolha de ${LANGNAME[l]} para um aluno brasileiro, ${levelLine(l)}, a partir dos erros reais dele.
+Erros (o que ele escreveu → o certo · ponto):
+${errs.map(e=>`- ${e.erro} → ${e.correta} · ${e.ponto||""}${e.conteudo&&C[l].byId[e.conteudo]&&!C[l].byId[e.conteudo].kind?" (id "+e.conteudo+")":""}`).join("\n")}
+Regras: frases NOVAS e naturais (não repita as frases acima), cada uma com UMA lacuna escrita exatamente ${l==="ja"?"＿＿＿":"___"}. 4 opções curtas: a correta primeiro; entre as erradas, inclua a forma que o aluno costuma usar por engano e uma estrutura parecida que se confunde com ela. Só uma opção certa. Cubra erros diferentes.
+${pts.length?'Em "id" use o id do ponto quando o exercício treinar um deles; senão deixe "".':'Deixe "id" vazio.'}
+Responda só com um array JSON: [{"id":"","s":"frase com a lacuna","o":["correta","errada","errada","errada"],"k":"${l==="ja"?"frase completa em hiragana, com espaços":""}","t":"tradução","w":"por que a correta está certa e a outra não, 1 frase"}]`;
+  const arr=await sampleFn.json(prompt,{cache:false});
+  if(!Array.isArray(arr)) throw {code:"invalid_json"};
+  return arr.filter(o=>o && typeof o.s==="string" && BLANK.test(o.s) && Array.isArray(o.o) && o.o.length===4 && o.o.every(x=>typeof x==="string"))
+    .map(o=>({id:typeof o.id==="string"?o.id:"", q:[o.s,o.o,o.k||"",o.t||"",o.w||""]}));
+}
+function errorDrill(l, errs, box){
+  box.innerHTML=""; const w=h("p",{class:"small muted",text:"O professor está montando exercícios a partir dos seus erros… (20 a 40 segundos)"}); box.append(w);
+  genErrorDrill(l, errs.slice(0,10)).then(qs=>{
+    w.remove(); if(!qs.length) throw {code:"invalid_json"};
+    const any={lang:l, id:"erros-"+l, t:"Seus erros", q:[]};
+    runSeq(box, qs.map(x=>{ const p=C[l].byId[x.id];
+      return (p && !p.kind) ? (d=>exMC(p,x.q,d,"Seu erro")) : (d=>exMC(any,x.q,d,"Seu erro",ok=>{ eloUpdate(l,"gramatica",DIFF[courseLevel(l)]||300,ok,"mc"); addDay(l,{[ok?"ok":"no"]:1, xp:ok?5:2}); })); }),
+      r=>{ box.innerHTML=""; box.append(h("div",{class:"card stack"}, h("p",{text:"Treino feito: "+r.ok+" certo(s), "+r.no+" erro(s)."}), h("p",{class:"small muted",text:"Acertos nos pontos da trilha contam para tirar o erro do banco (3 acertos em dias seguintes)."}),
+        h("button",{class:"btn",type:"button",text:"Outra rodada",onclick:()=>errorDrill(l, errs, box)}))); });
+  }).catch(e=>{ w.textContent=aiError(e)||""; });
+}
+
+/* ---------- diário de 3 frases ----------
+   Escrever sobre o próprio dia e receber correção logo em seguida: produção livre +
+   retorno imediato (Lyster e Saito, 2010). Cada correção entra no banco de erros. */
+function diarioLog(l){ const pf=store.perfil[l]; if(!Array.isArray(pf.diario)) pf.diario=[]; return pf.diario; }
+function diarioView(l){
+  const wrap=h("div",{class:"stack"});
+  const lr=learned(l), desafio=lr.length ? pick(lr.slice(-8)) : null;
+  const ta=h("textarea",{id:"diario-"+l,rows:"5",lang:l,placeholder: l==="ja" ? "例：今日は仕事が忙しかった。…" : "Z. B.: Heute war ich sehr müde. …"});
+  const st=h("p",{class:"small muted"}), out=h("div",{class:"stack"});
+  const hoje=diarioLog(l).find(x=>x.data===TODAY);
+  const btn=h("button",{class:"btn primary",type:"button",text: aiReady() ? "Corrigir com o professor" : "Salvar no diário"});
+  wrap.append(h("div",{class:"card stack"},
+    h("div",{class:"row"}, h("h3",{text:"Diário · 3 frases"}), h("span",{class:"spacer"}), h("span",{class:"jp small muted",text:"日記"})),
+    h("p",{class:"small",text:"Escreva 3 frases sobre o seu dia em "+LANGNAME[l]+". Sem dicionário primeiro: tente com o que sabe. "+(aiReady()?"O professor corrige e cada erro vai para o seu banco de erros.":"")}),
+    desafio ? h("p",{class:"small tip"}, h("b",{text:"Desafio de hoje: "}), "use ", h("span",{lang:l,text:desafio.t}), " ("+desafio.m+")") : null,
+    hoje ? h("p",{class:"small muted",text:"Você já escreveu hoje. Pode escrever de novo: a nova entrada também conta."}) : null,
+    ta, h("div",{class:"row"}, btn), st), out);
+  btn.addEventListener("click", async ()=>{
+    const txt=ta.value.trim(); if(txt.length<4){ ta.focus(); return; }
+    const entry={data:TODAY, texto:txt.slice(0,1200)};
+    if(!aiReady()){ diarioSave(l, entry, null); st.textContent="Salvo no diário."; ta.value=""; renderHist(); return; }
+    btn.disabled=true; out.innerHTML=""; st.textContent="O professor está corrigindo… (10 a 40 segundos)";
+    const ids=lr.slice(-30).map(p=>p.id+": "+p.t).join("; ");
+    const prompt=`Você é professor de ${LANGNAME[l]} de um aluno brasileiro, ${levelLine(l)}. Corrija o diário dele, frase por frase, sem mudar o que ele quis dizer.
+${desafio?`Desafio do dia: usar ${desafio.t} (${desafio.m}).`:""}
+Texto do aluno:
+"""${txt.slice(0,1200)}"""
+Para cada frase: "original"; "corrigida" (igual à original se estiver certa)${l==="ja"?'; "leitura" (a corrigida em hiragana, com espaços)':""}; "ok" (true se não tinha erro de gramática, vocabulário ou ortografia); "erros": lista de {"errado":"trecho exato do aluno","certo":"trecho corrigido","porque":"1 frase em português","ponto":"id do ponto da lista abaixo se o erro for sobre ele, senão vazio"}.
+Pontos já estudados (id: nome): ${ids||"nenhum"}
+Depois: "natural" (o texto todo como um nativo diria, curto), "desafioOk" (usou o ponto do desafio corretamente?), "comentario" (1 frase em português: o que melhorou ou o que observar).
+Responda só com JSON: {"frases":[{"original":"","corrigida":"",${l==="ja"?'"leitura":"",':""}"ok":true,"erros":[]}],"natural":"","desafioOk":false,"comentario":""}`;
+    try{
+      const r=await sampleFn.json(prompt,{cache:false});
+      if(!r || !Array.isArray(r.frases) || !r.frases.length) throw {code:"invalid_json"};
+      st.textContent=""; ta.value="";
+      diarioSave(l, entry, r); renderDiario(out, l, r); renderHist();
+    }catch(e){ st.textContent=aiError(e)||""; }
+    btn.disabled=false;
+  });
+  const hist=h("div"); wrap.append(hist);
+  function renderHist(){
+    hist.innerHTML=""; const log=diarioLog(l).slice(-6).reverse(); if(!log.length) return;
+    hist.append(h("details",{class:"card"}, h("summary",{text:"Entradas anteriores ("+diarioLog(l).length+")"}),
+      h("ul",{class:"errlist",style:"margin-top:8px"}, log.map(x=>h("li",{}, h("div",{class:"small muted",text:brDate(x.data)+(x.erros!=null?" · "+x.erros+" erro"+(x.erros!==1?"s":""):"")}),
+        h("div",{lang:l,text:x.texto}), x.natural ? h("div",{class:"small",lang:l}, h("b",{text:"Natural: "}), x.natural) : null)))));
+  }
+  renderHist();
+  return wrap;
+}
+function diarioSave(l, entry, r){
+  let nErr=0;
+  if(r){
+    r.frases.forEach(f=>{
+      const errs=Array.isArray(f.erros)?f.erros.filter(e=>e && e.errado && e.certo):[];
+      const ok=f.ok!==false && !errs.length;
+      eloUpdate(l,"escrita",DIFF[courseLevel(l)]||300,ok,"diario");
+      errs.forEach(e=>{
+        nErr++;
+        const p=e.ponto && C[l].byId[e.ponto] && !C[l].byId[e.ponto].kind ? C[l].byId[e.ponto] : null;
+        const id=l+"-escrita-"+(p?p.id:"diario")+"-"+slug(e.certo).slice(0,30);
+        const old=store.erros[id];
+        saveErro(id, old ? Object.assign({}, old, {erro:f.original||e.errado, ocorrencias:(old.ocorrencias||1)+1, ultima:TODAY, corrigido:false, acertosDepois:0})
+          : {idioma:l, competencia:"escrita", conteudo:p?p.id:"diario", ponto:p?p.t:"Diário", erro:f.original||e.errado, correta:f.corrigida||e.certo, causaProvavel:e.porque||"", ocorrencias:1, primeira:TODAY, ultima:TODAY, corrigido:false, acertosDepois:0});
+      });
+    });
+    entry.natural=String(r.natural||"").slice(0,1200); entry.erros=nErr;
+  }
+  const log=diarioLog(l); log.push(entry); if(log.length>40) log.splice(0, log.length-40);
+  savePerfil(l);
+  addDay(l, {prod:1, xp:r?15:8});
+}
+function renderDiario(out, l, r){
+  const card=h("div",{class:"card stack"}, h("h3",{text:"Correção"}));
+  r.frases.forEach(f=>{
+    const errs=Array.isArray(f.erros)?f.erros.filter(e=>e && e.errado):[];
+    const ok=f.ok!==false && !errs.length;
+    card.append(h("div",{class:"feedback "+(ok?"ok":"no")},
+      ok ? h("div",{class:"verdict",text:"Certo"}) : h("div",{class:"small"}, h("span",{class:"muted",text:"Você escreveu: "}), h("s",{lang:l,text:f.original||""})),
+      h("div",{class:"row",style:"flex-wrap:nowrap;align-items:flex-start"},
+        h("div",{style:"flex:1;min-width:0"}, h("div",{lang:l,style:"font-size:1.1rem;font-weight:500",text:f.corrigida||f.original||""}),
+          l==="ja"&&f.leitura ? h("div",{class:"small muted",lang:"ja",text:f.leitura}) : null),
+        playBtns(l, f.corrigida||f.original||"", f.leitura||"")),
+      errs.map(e=>h("div",{class:"small"}, h("span",{class:"wrong",lang:l,text:e.errado}), " → ", h("b",{lang:l,text:e.certo||""}), e.porque?" · "+e.porque:""))));
+  });
+  if(r.natural) card.append(h("div",{class:"stack",style:"gap:4px"}, h("div",{class:"row"}, h("span",{class:"eyebrow",text:"Como um nativo diria"}), h("span",{class:"spacer"}), playBtns(l, r.natural, "")), h("div",{lang:l,text:r.natural})));
+  if(r.comentario) card.append(h("p",{class:"small tip",text:(r.desafioOk?"Desafio cumprido. ":"")+r.comentario}));
+  card.append(h("p",{class:"small muted",text:"Leia a versão corrigida em voz alta duas vezes. Os erros já estão no banco de erros (aba Revisar)."}));
+  out.append(card);
+}
+
 function daysAway(){
   if(studiedOn(TODAY)) return 0;
   for(let k=1;k<=120;k++) if(studiedOn(addDays(TODAY,-k))) return k;
@@ -7021,7 +7497,9 @@ function showIdle(){
   const other=l==="ja"?"de":"ja", dueOther=dueItems(other).length;
   const pl=newVocabPlan(l,null), nNew=pl.words.length+pl.kanji.length;
   const toggleShort=on=>{ state.short=on; persist(); syncPlan(); renderTimer(); showIdle(); };
+  const onB=b=>{ if(b==="curta") toggleShort(true); else if(b==="revisao"){ selectTab("revisar"); window.scrollTo(0,0); } else { praticarSeg="poemas"; selectTab("praticar"); window.scrollTo(0,0); } };
   const card=h("div",{class:"card stack"},
+    state.finished && studiedOn(TODAY) ? null : planoCard(true, showIdle, onB),
     h("div",{class:"row"}, h("span",{class:"eyebrow",text: short ? "Sessão curta · 10 min" : main ? "Seu pomodoro de hoje" : "Próximo pomodoro"}), h("span",{class:"spacer"}),
       state.finished ? null : h("button",{class:"linkbtn",type:"button",text: short ? "Prefiro o pomodoro completo" : "Só tenho 10 min",onclick:()=>toggleShort(!short)})),
     away!=null && away>=3 ? h("div",{class:"tip small"}, h("b",{text:"Bem-vindo de volta. "}), "Faz "+away+" dias. Sem problema: a revisão de hoje vem limitada e os itens mais antigos primeiro"+(due>35?"; palavras novas ficam em pausa até a fila baixar":"")+". "+(short?"":"Se o dia estiver corrido, a sessão curta de 10 min já conta para a sequência.")) : null,
@@ -7111,9 +7589,10 @@ function blockLesson(box){
   const p=S.newPoint;
   if(!p){ box.append(h("div",{class:"card"},h("p",{text:"Trilha concluída. Use este tempo para a prática mista."}))); blockMixed(box); return; }
   if(S.hold) box.append(h("p",{class:"small tip",text:"Hoje sem ponto novo: há mais de 60 revisões vencidas. A aula e a prática reforçam o último ponto; o próximo entra quando a fila baixar."}));
-  box.append(lessonView(p,{onDone:()=>{ skipBlock(); }, doneLabel:"Entendi → Prática", onKnown:()=>{
+  const pre=h("div",{class:"stack"}); box.append(pre);
+  pretestView(p, pre, ()=>box.append(lessonView(p,{onDone:()=>{ skipBlock(); }, doneLabel:"Entendi → Prática", onKnown:()=>{
     const np=nextNew(S.lang); S.newPoint=np; S.hold=false; state.pointId=np?np.id:null; state.hold=false; persist();
-    box.innerHTML=""; blockLesson(box); window.scrollTo(0,0); }}));
+    box.innerHTML=""; blockLesson(box); window.scrollTo(0,0); }})));
 }
 function blockPractice(box){
   const p=S.newPoint;
@@ -7368,11 +7847,12 @@ function renderLearnPage(box, l, seg){
 function backBtn(){ return h("button",{class:"btn small ghost",type:"button",style:"align-self:flex-start",text:"← Trilha",onclick:()=>{ trilhaView=null; renderTrilha(); }}); }
 function renderPointPage(box, p){
   box.append(backBtn());
-  const practice=h("div",{class:"stack"});
-  box.append(lessonView(p,{onDone:()=>{
+  const practice=h("div",{class:"stack"}), pre=h("div",{class:"stack"});
+  box.append(pre);
+  pretestView(p, pre, ()=>box.append(lessonView(p,{onDone:()=>{
     practice.innerHTML="";
     runSeq(practice, stepsForNew(p), r=>{ practice.innerHTML=""; practice.append(h("div",{class:"card stack"}, h("h3",{text:"Prática feita"}), h("p",{text:r.ok+" certo(s), "+r.no+" erro(s)."}), h("div",{class:"row"}, backBtn(), aiReady()?h("button",{class:"btn",type:"button",text:"Mais exercícios (Claude)",onclick:()=>moreMC(p,practice)}):null))); });
-  }, doneLabel:"Praticar este ponto", onKnown:()=>{ const n=nextNew(p.lang); trilhaView= n?{pointId:n.id}:null; renderTrilha(); window.scrollTo(0,0); }}), practice);
+  }, doneLabel:"Praticar este ponto", onKnown:()=>{ const n=nextNew(p.lang); trilhaView= n?{pointId:n.id}:null; renderTrilha(); window.scrollTo(0,0); }}), practice));
 }
 /* Marca como já sabido sem nunca rebaixar: se o item já está num estado igual ou
    maior, nada muda (nem a curva nem a data de revisão). */
@@ -7502,7 +7982,7 @@ function renderPraticar(){
   box.innerHTML="";
   box.append(h("div",{class:"sechead"}, h("h1",{text:"Praticar"}), h("span",{class:"jp",text:"稽古"})));
   const bar=h("div",{class:"segctl",role:"tablist","aria-label":"Praticar"});
-  [["leitura","Leitura"],["poemas","Poemas"],["escuta","Escuta"],["trajeto","Trajeto"],["conversa","Conversa"]].forEach(([k,t])=>bar.append(h("button",{type:"button",role:"tab","aria-selected":String(praticarSeg===k),text:t,onclick:()=>{ praticarSeg=k; renderPraticar(); }})));
+  [["leitura","Leitura"],["diario","Diário"],["poemas","Poemas"],["escuta","Escuta"],["trajeto","Trajeto"],["conversa","Conversa"]].forEach(([k,t])=>bar.append(h("button",{type:"button",role:"tab","aria-selected":String(praticarSeg===k),text:t,onclick:()=>{ praticarSeg=k; renderPraticar(); }})));
   box.append(bar);
   const key=l+"-"+praticarSeg+"-"+(aiReady()?1:0);
   if(!praticarCache[key]){
@@ -7518,6 +7998,7 @@ function renderPraticar(){
       praticarCache[key]=w;
     }
     else if(praticarSeg==="poemas") praticarCache[key]=poemsView(l);
+    else if(praticarSeg==="diario") praticarCache[key]=diarioView(l);
     else praticarCache[key]=trajetoView(l);
   }
   box.append(praticarCache[key]);
@@ -7701,6 +8182,7 @@ function renderRevisar(){
     h("p",{class:"small",text: acc.pct==null ? "Acerto dos últimos 7 dias: sem dados ainda." : "Acerto dos últimos 7 dias: "+acc.pct+"% ("+(acc.ok+acc.no)+" respostas). "+(acc.pct>95?"Muito fácil: pode aumentar o ritmo de palavras novas.":acc.pct<75?"Abaixo do ideal: o app já reduz as palavras novas até você firmar o que viu.":"Na faixa boa (75–95%): difícil o bastante para fixar, fácil o bastante para não desanimar.")})));
   const listBox=h("div",{class:"card stack"}); box.append(listBox);
   renderRevisarList(listBox);
+  box.append(leechView(l));
 }
 function renderRevisarList(listBox){
   const l=state.lang; listBox.innerHTML="";
@@ -7708,6 +8190,9 @@ function renderRevisarList(listBox){
   listBox.append(h("h3",{text:"Banco de erros"}),
     h("p",{class:"small muted",text:"Cada erro sai daqui depois de 3 acertos do mesmo item em dias seguintes. Um ponto errado 3 vezes em 2 semanas ganha uma sequência de correção no início da próxima revisão."}));
   if(!errs.length){ listBox.append(h("p",{class:"small",text:"Nenhum erro em aberto."})); return; }
+  if(aiReady()){ const drill=h("div",{class:"stack"});
+    listBox.append(h("div",{class:"row"}, h("button",{class:"btn primary",type:"button",text:"Treinar meus erros (Claude)",onclick:()=>errorDrill(l, errs.map(([,e])=>e), drill)}),
+      h("span",{class:"small muted",text:"6 exercícios novos feitos dos seus erros, com a forma que você usou como armadilha."})), drill); }
   const ul=h("ul",{class:"errlist"});
   errs.slice(0,30).forEach(([id,e])=>{
     const p=e.conteudo && C[l].byId[e.conteudo];
@@ -7795,8 +8280,13 @@ function renderProgresso(){
       h("li",{}, "Correção logo depois da sua produção tem efeito duradouro, maior em respostas livres: ", h("a",{href:"https://doi.org/10.1017/S0272263109990520",target:"_blank",rel:"noopener",text:"Lyster e Saito (2010)"}), ". É o que a conversa e a \"frase sua\" fazem."),
       h("li",{}, "Metas, XP e níveis têm efeito pequeno mas real na motivação e no aprendizado: ", h("a",{href:"https://doi.org/10.1007/s10648-019-09498-w",target:"_blank",rel:"noopener",text:"Sailer e Homner (2020)"}), ". Aqui o nível do curso depende do domínio, não do XP, para o jogo não substituir o estudo."),
       h("li",{}, "Hábito se forma repetindo todo dia no mesmo contexto, e perder um dia isolado quase não atrapalha: ", h("a",{href:"https://doi.org/10.1002/ejsp.674",target:"_blank",rel:"noopener",text:"Lally et al. (2010)"}), ". Por isso existem a sessão curta de 10 min e o dia protegido na sequência."),
+      h("li",{}, "Plano se-então (\"se for 20h, depois do jantar, então estudo\") aumenta a chance de cumprir a meta: ", h("a",{href:"https://www.socmot.uni-konstanz.de/publications/implementation-intentions-and-goal-achievement-meta-analysis-effects-and-processes",target:"_blank",rel:"noopener",text:"Gollwitzer e Sheeran (2006)"}), ", metanálise de 94 testes."),
+      h("li",{}, "Leitura i+1: com cerca de 98 % das palavras conhecidas a compreensão sem ajuda fica adequada; com 95 %, mínima: ", h("a",{href:"https://nflrc.hawaii.edu/rfl/item/43",target:"_blank",rel:"noopener",text:"Hu e Nation (2000)"}), ". Por isso a leitura gerada usa as suas palavras e marca só poucas novas."),
+      h("li",{}, "Chutar antes da aula, mesmo errando, fixa mais que só estudar: ", h("a",{href:"https://doi.org/10.1037/a0016496",target:"_blank",rel:"noopener",text:"Richland, Kornell e Kao (2009)"}), ". É o pré-teste antes de cada ponto novo."),
+      h("li",{}, "Palavra que você erra sempre ganha um gancho pelo método da palavra-chave (som parecido + imagem): ", h("a",{href:"https://doi.org/10.1037/0278-7393.1.2.126",target:"_blank",rel:"noopener",text:"Atkinson e Raugh (1975)"}), "."),
       h("li",{text:"Erro recorrente (3 vezes em 2 semanas) abre uma sequência de correção: contraste, reconhecimento, montagem e produção."}),
       h("li",{text:"Carga controlada: 8–10 palavras novas por dia (máx. 20), metade se houver mais de 35 revisões vencidas ou acerto abaixo de 70 %, zero acima de 60 vencidas. Esses números são escolhas de desenho, não resultados de pesquisa."}))));
+  box.append(planoCard(false, renderProgresso));
   // ajustes
   const vs=h("div",{class:"status",role:"status"}), bs=h("div",{class:"status",role:"status"});
   const sel=(id,label,val,opts,onch)=>{ const s=h("select",{id,onchange:e=>{ onch(e.target.value); saveSettings(); scheduleUI(); }}, opts.map(([v,t])=>h("option",{value:v,text:t}))); s.value=String(val); return h("label",{class:"stack",style:"gap:4px"}, h("span",{class:"small",text:label}), s); };
@@ -7867,6 +8357,7 @@ function selectTab(t){
   if(t==="progresso") renderProgresso();
   if(t==="hoje") renderHello();
   try{ sessionStorage.setItem("lm-tab",t); }catch(e){}
+  try{ renderFab(); }catch(e){}
 }
 document.querySelectorAll("[role=tab][data-tab]").forEach(b=>b.addEventListener("click",()=>{ if(b.dataset.tab==="trilha") trilhaView=null; selectTab(b.dataset.tab); window.scrollTo(0,0); }));
 function updateBadge(){ const n=dueItems(state.lang).length; document.querySelectorAll(".dueBadge").forEach(b=>{ b.textContent=n>99?"99+":n; b.hidden=!n; }); }
@@ -7939,6 +8430,19 @@ let uiTimer=null;
 function scheduleUI(){ clearTimeout(uiTimer); uiTimer=setTimeout(renderUI,120); }
 /* o mesmo relógio e as mesmas metas mudam de lugar: coluna direita no computador, dentro de Hoje no celular */
 const wide=window.matchMedia("(min-width: 980px)");
+/* botão flutuante no celular: começar quando o relógio saiu da tela; voltar ao estudo de outra aba */
+function pomoOnScreen(){ const r=$("#pomo").getBoundingClientRect(); return r.height>0 && r.bottom>70 && r.top<window.innerHeight-90; }
+window.addEventListener("scroll", ()=>renderFab(), {passive:true});
+function renderFab(){
+  const f=$("#fab"); if(!f) return;
+  const started=document.body.classList.contains("running"), running=!!state.startedAt;
+  let show=false, ic="▶", txt="", act=null;
+  if(started && tab!=="hoje"){ show=true; ic=running?"⏱":"❚❚"; txt=$("#clock").textContent+" · "+(BLOCKS[blockAt(Math.min(elapsedNow(),TOTAL)).i]||{}).name+" · voltar"; act=()=>{ selectTab("hoje"); window.scrollTo(0,0); }; }
+  else if(!started && !state.finished && tab==="hoje" && !pomoOnScreen()){ show=true; txt=$("#startBtn").textContent; act=()=>{ window.scrollTo({top:0,behavior:"smooth"}); $("#startBtn").click(); }; }
+  f.hidden=!show; if(!show) return;
+  f.querySelector(".fab-ic").textContent=ic; f.querySelector(".fab-t").textContent=txt; f.setAttribute("aria-label",txt); f.onclick=act;
+}
+setInterval(renderFab, 1000);
 function placePanels(){
   const pomo=$("#pomo"), goals=$("#goals");
   if(wide.matches){ $("#slotPomoRail").append(pomo); $("#slotGoalsRail").append(goals); }

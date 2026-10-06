@@ -5,6 +5,10 @@ artifact no Claude. Pomodoro de 25 min (ou sessão curta de 10 min) com revisão
 palavras, kanji, escuta, leitura, poemas, conversa com o professor (Claude), metas diárias,
 níveis e exames para pular o que você já sabe.
 
+Também tem: plano se-então com evento semanal para a agenda (.ics), leitura i+1 gerada com as suas
+palavras, pré-teste antes de cada ponto novo, gancho de memória para palavras "sanguessuga",
+treino gerado a partir do banco de erros e diário de 3 frases com correção.
+
 ## Estrutura
 
 | Pasta/arquivo | O que é |

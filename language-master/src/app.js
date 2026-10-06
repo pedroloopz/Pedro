@@ -2213,7 +2213,7 @@ function leechView(l){
   const list=leeches(l).slice(0,12), box=h("div",{class:"card stack"});
   box.append(h("h3",{text:"Palavras sanguessuga"}),
     h("p",{class:"small muted",text:"Palavras que você esqueceu 3 vezes ou mais. Repetir mais não resolve: um gancho de memória sim. O gancho aparece toda vez que a palavra voltar na revisão."}));
-  if(!list.length){ box.append(h("p",{class:"small",text:"Nenhuma por enquanto."})); return box; }
+  if(!list.length) return null;
   const ul=h("ul",{class:"errlist"});
   list.forEach(v=>{
     const it=getItem(v), st=h("span",{class:"small muted"});
@@ -2356,7 +2356,7 @@ function renderDiario(out, l, r){
     const errs=Array.isArray(f.erros)?f.erros.filter(e=>e && e.errado):[];
     const ok=f.ok!==false && !errs.length;
     card.append(h("div",{class:"feedback "+(ok?"ok":"no")},
-      ok ? h("div",{class:"verdict",text:"Certo"}) : h("div",{class:"wrong",lang:l,text:f.original||""}),
+      ok ? h("div",{class:"verdict",text:"Certo"}) : h("div",{class:"small"}, h("span",{class:"muted",text:"Você escreveu: "}), h("s",{lang:l,text:f.original||""})),
       h("div",{class:"row",style:"flex-wrap:nowrap;align-items:flex-start"},
         h("div",{style:"flex:1;min-width:0"}, h("div",{lang:l,style:"font-size:1.1rem;font-weight:500",text:f.corrigida||f.original||""}),
           l==="ja"&&f.leitura ? h("div",{class:"small muted",lang:"ja",text:f.leitura}) : null),
@@ -3242,6 +3242,7 @@ function selectTab(t){
   if(t==="progresso") renderProgresso();
   if(t==="hoje") renderHello();
   try{ sessionStorage.setItem("lm-tab",t); }catch(e){}
+  try{ renderFab(); }catch(e){}
 }
 document.querySelectorAll("[role=tab][data-tab]").forEach(b=>b.addEventListener("click",()=>{ if(b.dataset.tab==="trilha") trilhaView=null; selectTab(b.dataset.tab); window.scrollTo(0,0); }));
 function updateBadge(){ const n=dueItems(state.lang).length; document.querySelectorAll(".dueBadge").forEach(b=>{ b.textContent=n>99?"99+":n; b.hidden=!n; }); }
@@ -3314,6 +3315,19 @@ let uiTimer=null;
 function scheduleUI(){ clearTimeout(uiTimer); uiTimer=setTimeout(renderUI,120); }
 /* o mesmo relógio e as mesmas metas mudam de lugar: coluna direita no computador, dentro de Hoje no celular */
 const wide=window.matchMedia("(min-width: 980px)");
+/* botão flutuante no celular: começar quando o relógio saiu da tela; voltar ao estudo de outra aba */
+function pomoOnScreen(){ const r=$("#pomo").getBoundingClientRect(); return r.height>0 && r.bottom>70 && r.top<window.innerHeight-90; }
+window.addEventListener("scroll", ()=>renderFab(), {passive:true});
+function renderFab(){
+  const f=$("#fab"); if(!f) return;
+  const started=document.body.classList.contains("running"), running=!!state.startedAt;
+  let show=false, ic="▶", txt="", act=null;
+  if(started && tab!=="hoje"){ show=true; ic=running?"⏱":"❚❚"; txt=$("#clock").textContent+" · "+(BLOCKS[blockAt(Math.min(elapsedNow(),TOTAL)).i]||{}).name+" · voltar"; act=()=>{ selectTab("hoje"); window.scrollTo(0,0); }; }
+  else if(!started && !state.finished && tab==="hoje" && !pomoOnScreen()){ show=true; txt=$("#startBtn").textContent; act=()=>{ window.scrollTo({top:0,behavior:"smooth"}); $("#startBtn").click(); }; }
+  f.hidden=!show; if(!show) return;
+  f.querySelector(".fab-ic").textContent=ic; f.querySelector(".fab-t").textContent=txt; f.setAttribute("aria-label",txt); f.onclick=act;
+}
+setInterval(renderFab, 1000);
 function placePanels(){
   const pomo=$("#pomo"), goals=$("#goals");
   if(wide.matches){ $("#slotPomoRail").append(pomo); $("#slotGoalsRail").append(goals); }
