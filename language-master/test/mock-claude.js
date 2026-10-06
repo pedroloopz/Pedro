@@ -43,6 +43,12 @@
     if(/Responda SEMPRE só com JSON: \{"fala"/.test(p) || /"fala"/.test(p))
       return ja ? {fala:"いらっしゃいませ。何をお探しですか。", leitura:"いらっしゃいませ。 なにを おさがし ですか。", traducao:"Bem-vindo. O que procura?", correcao:{ok:false, corrigida:"お弁当はありますか。", explicacao:"Use ありますか para perguntar se tem."}, dica:"Pergunte se tem bentô."}
                 : {fala:"Guten Tag! Was darf es sein?", leitura:"", traducao:"Bom dia! O que vai ser?", correcao:{ok:true, corrigida:"", explicacao:""}, dica:"Peça um pão."};
+    if(/método da palavra-chave/.test(p)) return {chave:"neko = néctar", cena:"Um gato bebendo néctar de uma flor gigante.", partes:""};
+    if(/a partir dos erros reais dele/.test(p)) return [{id: ja?"ja-yonisuru":"", s: ja?"毎日野菜を食べる＿＿＿。":"Ich ___ jeden Tag.", o: ja?["ようにしている","ようになっている","ことになっている","ことだ"]:["lerne","lernt","lernen","gelernt"], k:"", t:"teste", w:"porque sim"},{id:"", s: ja?"これは＿＿＿です。":"Das ist ___.", o: ja?["テスト","てすと","test","テスツ"]:["gut","guten","gutem","guter"], k:"", t:"teste", w:"porque sim"}];
+    if(/Corrija o diário dele/.test(p)) return {frases:[{original: ja?"今日は仕事が忙しいでした。":"Heute ich war müde.", corrigida: ja?"今日は仕事が忙しかったです。":"Heute war ich müde.", leitura: ja?"きょうは しごとが いそがしかった です。":"", ok:false, erros:[{errado: ja?"忙しいでした":"ich war", certo: ja?"忙しかったです":"war ich", porque:"Adjetivo い no passado.", ponto:""}]},{original: ja?"晩ご飯を食べました。":"Ich habe gegessen.", corrigida: ja?"晩ご飯を食べました。":"Ich habe gegessen.", ok:true, erros:[]}], natural: ja?"今日は仕事が忙しかった。":"Heute war ich müde.", desafioOk:false, comentario:"Bom começo."};
+    if(/Prepare uma leitura com glossário/.test(p) && /JÁ conhece/.test(p))
+      return ja ? {titulo:"雨の日", frases:[{seg:[{s:"今日",r:"きょう",m:"hoje",b:"今日"},{s:"は"},{s:"豪雨",r:"ごうう",m:"chuva forte",b:"豪雨",novo:true},{s:"です"},{s:"。"}],t:"Hoje está chovendo forte."}], perguntas:[{q:"Como está o tempo?",o:["Chuvoso","Ensolarado","Nevando","Ventando"]}]}
+                : {titulo:"Regen", frases:[{seg:[{s:"Heute",m:"hoje",b:"heute"},{s:"schüttet",m:"chove forte",b:"schütten",novo:true},{s:"es"},{s:"."}],t:"Hoje chove forte."}], perguntas:[{q:"Como está o tempo?",o:["Chuvoso","Ensolarado","Nevando","Ventando"]}]};
     if(/Prepare uma leitura com glossário/.test(p))
       return ja ? {titulo:"雨の日", frases:[{seg:[{s:"今日",r:"きょう",m:"hoje",b:"今日"},{s:"は"},{s:"雨",r:"あめ",m:"chuva",b:"雨"},{s:"です"},{s:"。"}],t:"Hoje está chovendo."}], perguntas:[{q:"Como está o tempo?",o:["Chuvoso","Ensolarado","Nevando","Ventando"]}]}
                 : {titulo:"Regen", frases:[{seg:[{s:"Heute",m:"hoje",b:"heute"},{s:"regnet",m:"chove",b:"regnen"},{s:"es"},{s:"."}],t:"Hoje chove."}], perguntas:[{q:"Como está o tempo?",o:["Chuvoso","Ensolarado","Nevando","Ventando"]}]};
@@ -58,7 +64,7 @@
   const sample = async function(input, opts){ const t="Resposta de teste do professor."; if(opts&&opts.onText) opts.onText({text:t, delta:t}); return {text:t, truncated:false}; };
   sample.json = async function(input, opts){ await new Promise(r=>setTimeout(r,30)); return fakeJSON(input); };
   sample.limits = async ()=>({images:false});
-  const downloads = { save: async ({filename, data})=>{ window.__DOWNLOAD={filename, size:String(data).length}; return {status:"saved"}; } };
+  const downloads = { save: async ({filename, data})=>{ window.__DOWNLOAD={filename, size:String(data).length, data:String(data).slice(0,3000)}; return {status:"saved"}; } };
   const caps = { db, user, sample, downloads };
   window.claude = { use: async (name)=> { await new Promise(r=>setTimeout(r,20)); return window.__NOAI && name==="sample" ? null : (caps[name]||null); } };
 })();

@@ -139,6 +139,8 @@ const STEP = `(scopeSel)=>{
     await shot(page,"d-trilha");
     await page.evaluate(()=>{ document.querySelector("#tab-trilha details summary").click(); document.querySelector("#tab-trilha .points li button").click(); });
     await page.waitForTimeout(200);
+    check("pré-teste antes da aula nova", await page.evaluate(()=>/Chute primeiro/.test(document.querySelector("#tab-trilha").textContent)));
+    await page.evaluate(()=>[...document.querySelectorAll("#tab-trilha .linkbtn")].find(b=>b.textContent==="pular o chute").click()); await page.waitForTimeout(150);
     const hasQuick = await page.evaluate(()=>[...document.querySelectorAll("#tab-trilha button")].some(b=>/teste rápido/.test(b.textContent)));
     check("botão 'Já sei este ponto'", hasQuick);
     await page.evaluate(()=>[...document.querySelectorAll("#tab-trilha button")].find(b=>/teste rápido/.test(b.textContent)).click());
@@ -325,6 +327,62 @@ const STEP = `(scopeSel)=>{
     await page.evaluate(()=>[...document.querySelectorAll("#tab-praticar button")].find(b=>b.textContent==="Marcar como lido").click()); await page.waitForTimeout(700);
     check("poema marcado como lido", await page.evaluate(()=>{ const p=window.__MOCKDB["data/users/user_test_1/app/perfil/ja"]; return p && p.poemas && Object.values(p.poemas).some(x=>x.lido); }));
     await shot(page,"m-poema");
+    await ctx.close();
+  }
+
+  /* ---------- 7. plano se-então, sanguessuga, treino de erros, diário e leitura i+1 ---------- */
+  {
+    const base="data/users/user_test_1/app", db={};
+    db[base]={criadoEm:"2026-09-01", versao:"v2"};
+    const vm=require("vm"), vctx={}; vctx.window=vctx; vm.createContext(vctx);
+    vm.runInContext(fs.readFileSync(path.join(ROOT,"src","data","vocab-ja.js"),"utf8"), vctx);
+    const words=vctx.LM_VJA.split("\n").map(x=>x.trim()).filter(x=>x && x[0]!=="#").slice(0,32).map(x=>x.split("|")[0]);
+    words.forEach((w,i)=>{ const id="v-ja-"+w, k="w"+i;
+      db[base+"/itens/"+k]={id,lang:"ja",tipo:"vocab",estado:3,reps:2,intervalo:5,vence:dayRel(3),acertos:3,erros:i===0?5:0,lapsos:i===0?3:0,ultima:dayRel(-2),srsDia:dayRel(-2),prodDias:[],criado:dayRel(-10),S:i===0?1:6,D:5,fsrs:6,ultRev:dayRel(-2),mod:1,_k:id}; });
+    db[base+"/erros/e1"]={idioma:"ja",competencia:"gramatica",conteudo:"ja-yonisuru",ponto:"〜ようにする",erro:"食べなくてようにする",correta:"食べないようにする",ocorrencias:2,primeira:dayRel(-3),ultima:dayRel(-1),corrigido:false,acertosDepois:0,_k:"e1"};
+    const {page, ctx} = await newPage({width:390, height:844}, {db, ja:true});
+    await page.waitForTimeout(700);
+    // plano se-então
+    check("Hoje convida a montar o plano se-então", await page.evaluate(()=>/plano se-então/.test(document.querySelector("#stage").textContent)));
+    await page.evaluate(()=>[...document.querySelectorAll("#stage button")].find(b=>b.textContent==="Montar plano").click()); await page.waitForTimeout(100);
+    await page.evaluate(()=>{ const g=document.querySelector("#pl-gat"); g.value="depois do jantar"; document.querySelector("#pl-hora").value="20:30";
+      [...document.querySelectorAll(".daypick button")].find(b=>b.textContent==="sáb").click(); [...document.querySelectorAll("#stage button")].find(b=>b.textContent==="Salvar plano").click(); });
+    await page.waitForTimeout(800);
+    const aj = await page.evaluate(()=>window.__MOCKDB["data/users/user_test_1/app/perfil/ajustes"]);
+    check("plano salvo nos ajustes", aj && aj.plano && aj.plano.hora==="20:30" && aj.plano.gatilho==="depois do jantar" && !aj.plano.dias.includes(6), JSON.stringify(aj&&aj.plano));
+    check("Hoje mostra o plano", await page.evaluate(()=>/Se for 20:30, depois do jantar, então/.test(document.querySelector("#stage").textContent)));
+    await page.evaluate(()=>[...document.querySelectorAll("#stage .linkbtn")].find(b=>/agenda/.test(b.textContent)).click()); await page.waitForTimeout(300);
+    const ics = await page.evaluate(()=>window.__DOWNLOAD);
+    check("evento .ics semanal", ics && /\.ics$/.test(ics.filename) && /RRULE:FREQ=WEEKLY;BYDAY=SU,MO,TU,WE,TH,FR\r\n/.test(ics.data) && /DTSTART:\d{8}T203000/.test(ics.data), ics && ics.data.split("\r\n").filter(x=>/RRULE|DTSTART/.test(x)).join(" "));
+    await shot(page,"m-plano");
+    // sanguessuga
+    await page.click('.bottombar [data-tab="revisar"]'); await page.waitForTimeout(200);
+    check("lista de sanguessugas", await page.evaluate(w=>{ const t=document.querySelector("#tab-revisar").textContent; return /Palavras sanguessuga/.test(t) && t.includes(w); }, words[0]));
+    await page.evaluate(()=>[...document.querySelectorAll("#tab-revisar button")].find(b=>/Criar gancho/.test(b.textContent)).click()); await page.waitForTimeout(800);
+    check("gancho de memória salvo", await page.evaluate(id=>{ return Object.values(window.__MOCKDB).some(it=>it && it.id===id && /néctar/.test(it.mnemo||"")); }, "v-ja-"+words[0]));
+    // treino dos erros
+    await page.evaluate(()=>[...document.querySelectorAll("#tab-revisar button")].find(b=>/Treinar meus erros/.test(b.textContent)).click()); await page.waitForTimeout(300);
+    await steps(page, "#tab-revisar", 20, `/Treino feito/.test(document.querySelector("#tab-revisar").textContent)`);
+    check("treino do banco de erros roda", await page.evaluate(()=>/Treino feito/.test(document.querySelector("#tab-revisar").textContent)));
+    await shot(page,"m-sanguessuga");
+    // diário
+    await page.click('.bottombar [data-tab="praticar"]'); await page.waitForTimeout(150);
+    check("abas do Praticar cabem no celular", await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1));
+    await page.evaluate(()=>[...document.querySelectorAll("#tab-praticar .segctl button")].find(b=>b.textContent==="Diário").click()); await page.waitForTimeout(150);
+    await page.evaluate(()=>{ const t=document.querySelector("#diario-ja"); t.value="今日は仕事が忙しいでした。晩ご飯を食べました。"; [...document.querySelectorAll("#tab-praticar button")].find(b=>/Corrigir com o professor/.test(b.textContent)).click(); });
+    await page.waitForTimeout(900);
+    check("diário corrigido", await page.evaluate(()=>/Correção/.test(document.querySelector("#tab-praticar").textContent) && /忙しかったです/.test(document.querySelector("#tab-praticar").textContent)));
+    const dj = await page.evaluate(()=>{ const d=window.__MOCKDB; return {perfil:d["data/users/user_test_1/app/perfil/ja"], erros:Object.entries(d).filter(([k,v])=>k.includes("/erros/") && v.competencia==="escrita").length}; });
+    check("diário salvo e erro no banco", dj.perfil && Array.isArray(dj.perfil.diario) && dj.perfil.diario.length===1 && dj.erros===1, JSON.stringify({d:dj.perfil&&dj.perfil.diario, e:dj.erros}));
+    await shot(page,"m-diario");
+    // leitura i+1
+    await page.evaluate(()=>[...document.querySelectorAll("#tab-praticar .segctl button")].find(b=>b.textContent==="Leitura").click()); await page.waitForTimeout(150);
+    check("leitura começa no modo i+1", await page.evaluate(()=>document.querySelector("#rd-modo").value==="i1"));
+    await page.evaluate(()=>[...document.querySelectorAll("#tab-praticar button")].find(b=>b.textContent==="Gerar leitura").click()); await page.waitForTimeout(500);
+    check("leitura i+1 mostra cobertura e palavra nova", await page.evaluate(()=>!!document.querySelector("#tab-praticar .cover") && !!document.querySelector("#tab-praticar .tokw.nova")), await page.evaluate(()=>(document.querySelector("#tab-praticar .cover")||{}).textContent));
+    await page.evaluate(()=>[...document.querySelectorAll("#tab-praticar .cover button")].find(b=>/Estudar as/.test(b.textContent)).click()); await page.waitForTimeout(800);
+    check("palavras novas da leitura viram itens", await page.evaluate(()=>Object.keys(window.__MOCKDB).some(k=>/vocabExtra/.test(k)) && Object.values(window.__MOCKDB).some(v=>v && v.id==="vx-ja-豪雨" && v.estado>=2)));
+    await shot(page,"m-leitura-i1");
     await ctx.close();
   }
 
