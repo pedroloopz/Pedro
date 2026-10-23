@@ -225,3 +225,18 @@ test('legenda automática em japonês: transcreve o filme japonês, pula áudio 
   const vtt = await (await get(legs.find(l => l.idioma === 'jf').url)).text();
   assert.match(vtt, /今日（きょう）は/);
 });
+
+test('modo estudo: cartões por usuário, exportação para o Anki e exclusão', async () => {
+  const enviarJson = (rota, metodo, corpo, senha = ADMIN) => get(tok(rota, senha), { method: metodo, body: corpo && JSON.stringify(corpo), headers: { 'Content-Type': 'application/json' } });
+  // sem o MeCab no "python" de teste a análise fica indisponível, mas o cartão é salvo assim mesmo
+  assert.equal((await enviarJson('/api/estudo/analisar', 'POST', { texto: '今日は' })).status, 503);
+  const r = await enviarJson('/api/estudo/cartoes', 'POST', { frase: '今日は<b>', traducao: 'Hoje', fonte: 'Filme Teste', tempo: 65 });
+  const cartao = await r.json();
+  assert.equal(cartao.fraseRuby, '今日は&lt;b&gt;');
+  assert.equal((await (await get(tok('/api/estudo/cartoes', SALA))).json()).length, 0); // cada usuário tem os seus
+  const anki = await (await get(tok('/api/estudo/anki.txt'))).text();
+  assert.match(anki, /^#separator:tab\n#html:true/);
+  assert.match(anki, /今日は&lt;b&gt;\t<i>Hoje<\/i><br><small>Filme Teste · 00:01:05<\/small>\tiptv japones/);
+  assert.equal((await (await enviarJson(`/api/estudo/cartoes/${cartao.id}`, 'DELETE')).json()).ok, true);
+  assert.equal((await (await get(tok('/api/estudo/cartoes'))).json()).length, 0);
+});

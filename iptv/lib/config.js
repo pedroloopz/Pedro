@@ -31,12 +31,15 @@ const PADRAO = {
     ociosoSegundos: 60,
     verificarACadaMinutos: 15,  // reteste dos canais públicos entre as atualizações
     linksDiretos: false,        // true: playlist aponta direto para a fonte (sem troca automática de link)
+    canaisPeloServidor: 'geo',  // nenhum | geo (só os bloqueados por país) | todos: a imagem passa pelo servidor
     biblioteca: 'biblioteca',   // pasta com filmes/ e series/
     tmdbApiKey: '',             // opcional: capas e sinopses (themoviedb.org)
     idiomaLegendaPadrao: 'pt',
     https: { cert: '', key: '' },
     epgIptvOrg: { ativo: false, dias: 2, conexoes: 5 },
     // legenda automática em japonês (precisa de faster-whisper ou whisper.cpp; veja o README)
+    // modo estudo (player web): análise das falas em japonês; precisa de fugashi + unidic-lite
+    estudo: { dicionario: true, python: '' },
     transcricao: { ativo: false, motor: 'faster-whisper', modelo: 'small', dispositivo: 'auto',
       python: 'python3', whisperCpp: 'whisper-cli', furigana: true, detectarIdioma: true },
   },
@@ -84,6 +87,7 @@ const config = () => {
   c.https = { ...PADRAO.config.https, ...c.https };
   c.epgIptvOrg = { ...PADRAO.config.epgIptvOrg, ...c.epgIptvOrg };
   c.transcricao = { ...PADRAO.config.transcricao, ...c.transcricao };
+  c.estudo = { ...PADRAO.config.estudo, ...c.estudo };
   if (process.env.IPTV_CERT) c.https = { cert: process.env.IPTV_CERT, key: process.env.IPTV_KEY };
   return c;
 };

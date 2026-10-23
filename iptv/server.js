@@ -18,6 +18,7 @@ const biblioteca = require('./lib/biblioteca');
 const legendas = require('./lib/legendas');
 const xtream = require('./lib/xtream');
 const transcricao = require('./lib/transcricao');
+const estudo = require('./lib/estudo');
 const { sondar } = require('./lib/midia');
 
 const PORTA = Number(process.env.PORT) || 8080;
@@ -96,6 +97,7 @@ atualizarSePreciso();
 setInterval(() => atualizarSePreciso(), 10 * 60_000);
 setInterval(() => verificarSePreciso(), 60_000);
 setInterval(() => { biblioteca.escanear(); atualizarGrades(); }, 10 * 60_000);
+setTimeout(() => estudo.baixarDicionario(), 15_000);
 // legendas automáticas em japonês (se ativadas): procura vídeos novos sem legenda
 setTimeout(() => transcricao.varrer().catch(e => console.warn(`[transcrição] ${e.message}`)), 20_000);
 setInterval(() => transcricao.varrer().catch(e => console.warn(`[transcrição] ${e.message}`)), 30 * 60_000);
@@ -290,13 +292,38 @@ async function rotaAdmin(req, res, rota) {
   enviar(res, 404, 'não encontrado');
 }
 
+async function rotaEstudo(req, res, acao, id, usuario) {
+  const quem = usuario.usuario;
+  try {
+    if (acao === 'analisar' && req.method === 'POST') {
+      const { texto } = await lerCorpo(req, 64 * 1024) || {};
+      try {
+        return json(res, { tokens: await estudo.analisar(texto) });
+      } catch (e) {
+        return json(res, { erro: e.message }, 503);
+      }
+    }
+    if (acao === 'estado') return json(res, estudo.estado());
+    if (acao === 'cartoes' && req.method === 'GET') return json(res, estudo.listar(quem));
+    if (acao === 'cartoes' && req.method === 'POST') return json(res, await estudo.adicionar(quem, await lerCorpo(req, 64 * 1024) || {}));
+    if (acao === 'cartoes' && req.method === 'DELETE' && id) return json(res, { ok: estudo.remover(quem, id) });
+    if (acao === 'anki.txt') {
+      return enviar(res, 200, estudo.anki(quem), 'text/plain; charset=utf-8',
+        { 'Content-Disposition': 'attachment; filename="iptv-japones-anki.txt"' });
+    }
+  } catch (e) {
+    return json(res, { erro: e.message }, 400);
+  }
+  enviar(res, 404, 'não encontrado');
+}
+
 async function rotear(req, res) {
   const url = new URL(req.url, 'http://x');
   const rota = url.pathname;
   const ip = req.socket.remoteAddress;
 
   if (req.method === 'OPTIONS') {
-    return enviar(res, 204, '', 'text/plain', { 'Access-Control-Allow-Headers': 'Authorization, Content-Type', 'Access-Control-Allow-Methods': 'GET, PUT, POST' });
+    return enviar(res, 204, '', 'text/plain', { 'Access-Control-Allow-Headers': 'Authorization, Content-Type', 'Access-Control-Allow-Methods': 'GET, PUT, POST, DELETE' });
   }
   if (rota === '/saude') {
     return json(res, { ok: true, desde: new Date(INICIO).toISOString(), canais: canais.visiveis().length,
@@ -342,7 +369,7 @@ async function rotear(req, res) {
     const c = canais.porId(m[1]);
     if (!c) return enviar(res, 404, 'canal não encontrado');
     if (c.local) { res.writeHead(302, { Location: comToken(`/hls/${c.id}/index.m3u8`, token) }); return res.end(); }
-    return externos.rotaCanal(req, res, c, token);
+    return externos.rotaCanal(req, res, c, token, cfg.canaisPeloServidor);
   }
   if ((m = rota.match(/^\/proxy\/([a-z0-9_-]+)$/))) {
     const c = canais.porId(m[1]);
@@ -372,6 +399,7 @@ async function rotear(req, res) {
         episodios: s.episodios.map(e => ({ ...item(e), temporada: e.temporada, episodio: e.episodio })) })),
     });
   }
+  if ((m = rota.match(/^\/api\/estudo\/([\w.-]+)(?:\/([a-f0-9]+))?$/))) return rotaEstudo(req, res, m[1], m[2], usuario);
   if ((m = rota.match(/^\/api\/admin\/([a-z-]+)$/))) {
     if (!usuario.admin) return enviar(res, 403, 'só administradores');
     return rotaAdmin(req, res, m[1]);

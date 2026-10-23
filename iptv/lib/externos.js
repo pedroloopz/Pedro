@@ -143,12 +143,14 @@ async function rotaProxy(req, res, c, url, token) {
 }
 
 // /canal/<id>.m3u8 — o link que vai na playlist dos apps. Redireciona para o link
-// que está no ar; se a fonte exige User-Agent/Referer, passa pelo proxy.
-async function rotaCanal(req, res, c, token) {
+// que está no ar; passa pelo proxy (a imagem vem pelo servidor) quando a fonte exige
+// User-Agent/Referer ou, conforme "canaisPeloServidor", quando só toca no país do
+// servidor (ex.: servidor na Alemanha abre ARD, ZDF, Pluto TV alemã).
+async function rotaCanal(req, res, c, token, modo = 'geo') {
   for (let tentativa = 0; tentativa < c.origens.length; tentativa++) {
     const e = est(c);
     const o = origemAtiva(c);
-    if (o.userAgent || o.referrer) return proxyPrincipal(res, c, token);
+    if (o.userAgent || o.referrer || modo === 'todos' || (modo === 'geo' && o.geo)) return proxyPrincipal(res, c, token);
     // confirma o link se a última verificação tem mais de 1 minuto
     if (Date.now() - e.verificadoEm < 60_000 || await estaNoAr(o, 5000)) {
       e.verificadoEm = Date.now();

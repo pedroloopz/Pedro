@@ -96,7 +96,11 @@ const slug = s => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
   .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 50) || 'canal';
 
 const resolucao = nome => Number((nome.match(/\((\d{3,4})p\)/) || [])[1] || 0);
-const nomeLimpo = nome => nome.replace(/\s*\[[^\]]*\]/g, '').replace(/\s*\(\d{3,4}p\)/, '').trim();
+// tira "[Geo-blocked]", "(720p)" e os símbolos do Free-TV (Ⓖ bloqueio por país, Ⓨ YouTube, Ⓢ…)
+const nomeLimpo = nome => nome.replace(/\s*\[[^\]]*\]/g, '').replace(/\s*\(\d{3,4}p\)/, '')
+  .replace(/\s*[\u24B6-\u24E9]/g, '').trim();
+// só toca com IP do país de origem
+const bloqueioPorPais = nome => /\[Geo-blocked\]|\u24BC/i.test(nome);
 
 // "NHKWorldJapan.jp@HD" e "@SD" são o mesmo canal em qualidades diferentes (viram
 // reserva um do outro); "@Brazil" e "@Mexico" são versões regionais (ficam separadas)
@@ -134,6 +138,7 @@ function agrupar(itens) {
       // melhor resolução primeiro; o servidor troca para o próximo quando um falha
       origens: links.sort((a, b) => resolucao(b.nome) - resolucao(a.nome)).map(l => ({
         url: l.url, userAgent: l.userAgent, referrer: l.referrer, qualidade: resolucao(l.nome) || undefined,
+        geo: bloqueioPorPais(l.nome) || undefined,
       })),
     };
   }).sort((a, b) => a.grupo.localeCompare(b.grupo) || a.nome.localeCompare(b.nome));

@@ -21,6 +21,8 @@ const { temporadaEpisodio, tituloEAno } = require('../lib/biblioteca');
 const { tituloDoArquivo } = require('../lib/midia');
 const { lerPlaylist } = require('../lib/transmissao');
 const { escolherAudio } = require('../lib/transcricao');
+const estudo = require('../lib/estudo');
+const zlib = require('zlib');
 const { execFileSync } = require('child_process');
 
 test('lê M3U com atributos, User-Agent e Referer', () => {
@@ -60,9 +62,13 @@ test('agrupa links do mesmo canal com a melhor qualidade primeiro', () => {
     '#EXTINF:-1 group-title="Undefined",Canal B', 'http://b/1.m3u8',
     '#EXTINF:-1 tvg-id="A.br@HD",Canal A HD', 'http://a/hd.m3u8',
     '#EXTINF:-1 tvg-id="A.br@Portugal",Canal A Portugal', 'http://a/pt.m3u8',
+    '#EXTINF:-1 tvg-id="Erste.de",Das Erste Ⓖ', 'http://de/erste.m3u8',
   ].join('\n'));
   const lista = agrupar(itens);
-  assert.equal(lista.length, 3); // @HD vira reserva; @Portugal é outra versão
+  assert.equal(lista.length, 4); // @HD vira reserva; @Portugal é outra versão
+  const erste = lista.find(c => c.tvgId === 'Erste.de');
+  assert.equal(erste.nome, 'Das Erste');
+  assert.equal(erste.origens[0].geo, true);
   const a = lista.find(c => c.tvgId === 'A.br@SD');
   assert.equal(a.nome, 'Canal A');
   assert.deepEqual(a.origens.map(o => o.url), ['http://a/1080.m3u8', 'http://a/480.m3u8', 'http://a/hd.m3u8']);
@@ -226,4 +232,19 @@ test('furigana: leitura pelo contexto e só nos kanji', { skip: !temMecab && 'fu
   assert.match(texto, /日本語（にほんご）を勉強（べんきょう）して/);
   assert.match(texto, /食（た）べ物（もの）を食（た）べた/);
   assert.match(texto, /00:00:01,000 --> 00:00:03,000/);
+});
+
+test('modo estudo: lê o .zip do dicionário e monta cartões para o Anki', () => {
+  // zip mínimo com um arquivo comprimido (deflate)
+  const conteudo = Buffer.from('{"words":[]}');
+  const comp = zlib.deflateRawSync(conteudo);
+  const nome = Buffer.from('jmdict.json');
+  const cab = Buffer.alloc(30);
+  cab.writeUInt32LE(0x04034b50, 0); cab.writeUInt16LE(8, 8); cab.writeUInt32LE(comp.length, 18);
+  cab.writeUInt32LE(conteudo.length, 22); cab.writeUInt16LE(nome.length, 26);
+  assert.equal(estudo.extrairZipUnico(Buffer.concat([cab, nome, comp])).toString(), '{"words":[]}');
+  assert.throws(() => estudo.extrairZipUnico(Buffer.from('nada aqui, 30 bytes de lixo....')), /não é um \.zip/);
+
+  const html = estudo.rubyHtml([{ ruby: [['食', 'た'], ['べ', null]] }, { ruby: [['<b>', null]] }]);
+  assert.equal(html, '<ruby>食<rt>た</rt></ruby>べ&lt;b&gt;');
 });
