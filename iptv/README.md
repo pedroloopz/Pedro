@@ -17,7 +17,10 @@ channels.json ─► server.js ─► ffmpeg (1 por canal, sob demanda) ─► h
                     ├─ /playlist.m3u    → lista para VLC, TiviMate, IPTV Smarters, Kodi
                     ├─ /epg.xml         → guia de programação (XMLTV)
                     ├─ /api/canais      → JSON com os canais
-                    └─ /hls/<id>/...    → o vídeo em si
+                    ├─ /hls/<id>/...    → o vídeo em si
+                    └─ /proxy/<id>      → canais públicos no player web
+
+fontes.json ─► atualizar.js (todo dia) ─► testa os streams ─► externos.json
 ```
 
 - O ffmpeg de um canal só liga quando alguém abre o canal e desliga após
@@ -67,6 +70,40 @@ H.264/AAC; quase zero CPU) e `programacao` (repete todo dia no EPG):
 
 O `id` aceita só letras minúsculas, números, `-` e `_`. Reinicie o servidor
 após editar.
+
+## Canais públicos atualizados todo dia (iptv-org)
+
+Além dos seus canais, o servidor baixa sozinho as listas públicas do
+[iptv-org/iptv](https://github.com/iptv-org/iptv) (o projeto por trás do
+[awesome-iptv](https://github.com/iptv-org/awesome-iptv)), **testa cada stream**
+e mantém só os que estão no ar. Isso roda ao iniciar o servidor e de novo a
+cada 24 h, sem precisar fazer nada.
+
+- Configuração em `fontes.json`:
+
+  | Campo | Padrão | O que faz |
+  |---|---|---|
+  | `listas` | Brasil + idioma português | URLs `.m3u` a baixar (veja abaixo outras) |
+  | `atualizarACadaHoras` | `24` | intervalo entre atualizações |
+  | `excluirGrupos` | `[]` | ex.: `["Shop", "Religious"]` |
+  | `excluirNaoVinteQuatroHoras` | `false` | remove canais marcados `[Not 24/7]` |
+  | `testarStreams` | `true` | testa cada link antes de incluir |
+  | `timeoutTesteMs` / `simultaneos` | `8000` / `20` | rigor e velocidade do teste |
+  | `epgExterno` | `[]` | URLs de guia XMLTV para os canais públicos (o iptv-org não hospeda guia pronto; há fornecedores na aba *Providers → EPG* do awesome-iptv) |
+
+- Outras listas do iptv-org: `https://iptv-org.github.io/iptv/countries/pt.m3u`
+  (Portugal), `.../categories/news.m3u` (notícias), `.../index.m3u` (mundo
+  inteiro, ~10 mil canais — o teste demora).
+- Forçar atualização agora: `node atualizar.js` (ou apague `externos.json` e
+  reinicie o servidor).
+- Se o servidor não fica ligado direto, agende a atualização:
+  - Linux/macOS (`crontab -e`): `0 5 * * * cd /caminho/para/iptv && node atualizar.js`
+  - Windows (PowerShell): `schtasks /Create /SC DAILY /ST 05:00 /TN IPTV /TR "node C:\caminho\iptv\atualizar.js"`
+- Na playlist `.m3u`, os canais públicos apontam **direto para a fonte** (não
+  gastam sua internet nem CPU). No player web eles passam por um proxy do
+  servidor, porque o navegador bloqueia (CORS) a maioria desses links.
+- Se `iptv-org.github.io` estiver bloqueado na sua rede, o atualizador baixa o
+  mesmo arquivo de `raw.githubusercontent.com` automaticamente.
 
 ## Assistir na TV / celular
 

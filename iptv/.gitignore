@@ -1,3 +1,5 @@
 hls/
 midia/*
 !midia/.gitkeep
+externos.json
+externos.json.tmp

@@ -11,7 +11,11 @@
   body { margin: 0; font-family: system-ui, sans-serif; background: var(--fundo); color: var(--texto);
          display: grid; grid-template-columns: 280px 1fr; height: 100vh; }
   aside { background: var(--painel); overflow-y: auto; padding: 16px; }
-  h1 { font-size: 18px; margin: 0 0 16px; }
+  h1 { font-size: 18px; margin: 0 0 12px; }
+  #busca { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid #ffffff20;
+           background: var(--fundo); color: inherit; font: inherit; }
+  #atualizado { font-size: 12px; color: var(--suave); margin: 8px 0 0; }
+  button img { width: 28px; height: 20px; object-fit: contain; flex: none; }
   h2 { font-size: 12px; text-transform: uppercase; color: var(--suave); margin: 16px 0 6px; letter-spacing: .05em; }
   button { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; padding: 10px 12px;
            border: 0; border-radius: 8px; background: transparent; color: inherit; font: inherit; cursor: pointer; }
@@ -32,6 +36,8 @@
 <body>
 <aside>
   <h1>📺 Minha TV</h1>
+  <input id="busca" type="search" placeholder="Buscar canal…" autocomplete="off">
+  <p id="atualizado"></p>
   <div id="lista"></div>
 </aside>
 <main>
@@ -52,7 +58,7 @@ function tocar(canal, botao) {
   document.querySelectorAll('button.ativo').forEach(b => b.classList.remove('ativo'));
   botao.classList.add('ativo');
   status.textContent = `Sintonizando ${canal.nome}… (o primeiro acesso leva alguns segundos)`;
-  const src = comToken(`/hls/${canal.id}/index.m3u8`);
+  const src = canal.src;
   if (hls) hls.destroy();
   if (window.Hls && Hls.isSupported()) {
     hls = new Hls({ manifestLoadingMaxRetry: 6, manifestLoadingRetryDelay: 2000 });
@@ -67,20 +73,40 @@ function tocar(canal, botao) {
   }
 }
 
-fetch(comToken('/api/canais')).then(r => r.json()).then(canais => {
+const semAcento = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+let todos = [];
+
+function desenhar(filtro = '') {
   const lista = document.getElementById('lista');
+  lista.replaceChildren();
   const grupos = {};
-  for (const c of canais) (grupos[c.grupo || 'Geral'] ||= []).push(c);
-  for (const [grupo, itens] of Object.entries(grupos)) {
-    const h = document.createElement('h2'); h.textContent = grupo; lista.append(h);
-    for (const c of itens) {
+  for (const c of todos) {
+    if (filtro && !semAcento(`${c.nome} ${c.grupo}`).includes(semAcento(filtro))) continue;
+    // seus canais primeiro, depois os públicos do iptv-org
+    (grupos[c.externo ? c.grupo || 'Outros' : `★ ${c.grupo || 'Meus canais'}`] ||= []).push(c);
+  }
+  const nomes = Object.keys(grupos).sort((a, b) => (b[0] === '★') - (a[0] === '★') || a.localeCompare(b));
+  for (const grupo of nomes) {
+    const h = document.createElement('h2'); h.textContent = `${grupo} (${grupos[grupo].length})`; lista.append(h);
+    for (const c of grupos[grupo]) {
       const b = document.createElement('button');
-      b.textContent = c.nome;
+      if (c.logo) { const img = document.createElement('img'); img.src = c.logo; img.loading = 'lazy'; img.alt = ''; img.onerror = () => img.remove(); b.append(img); }
+      b.append(c.nome);
       if (c.aoVivo) { const p = document.createElement('span'); p.className = 'ao-vivo'; p.title = 'no ar'; b.append(p); }
       b.onclick = () => tocar(c, b);
       lista.append(b);
     }
   }
+}
+
+document.getElementById('busca').oninput = e => desenhar(e.target.value);
+
+fetch(comToken('/api/canais')).then(r => r.json()).then(dados => {
+  todos = dados.canais;
+  document.getElementById('atualizado').textContent = dados.atualizadoEm
+    ? `${todos.length} canais · lista pública atualizada em ${new Date(dados.atualizadoEm).toLocaleString('pt-BR')}`
+    : `${todos.length} canais · baixando lista pública (recarregue em alguns minutos)`;
+  desenhar();
 }).catch(() => { status.textContent = 'Não consegui carregar os canais. O servidor está rodando?'; });
 </script>
 </body>

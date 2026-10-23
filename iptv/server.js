@@ -3,7 +3,10 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
+const { Readable } = require('stream');
 const { spawn } = require('child_process');
+const atualizador = require('./atualizar');
 
 const PORTA = Number(process.env.PORT) || 8080;
 const TOKEN = process.env.IPTV_TOKEN || ''; // se definido, toda requisição precisa de ?token=
@@ -12,12 +15,39 @@ const RAIZ = __dirname;
 const HLS = path.join(RAIZ, 'hls');
 const PUBLICO = path.join(RAIZ, 'public');
 
-const canais = JSON.parse(fs.readFileSync(path.join(RAIZ, 'channels.json'), 'utf8'));
-for (const c of canais) {
-  if (!/^[a-z0-9_-]+$/.test(c.id)) throw new Error(`id inválido em channels.json: "${c.id}"`);
+const SEGREDO = crypto.randomBytes(16); // assina as URLs do proxy para ele não virar proxy aberto
+
+// canais = os seus (channels.json) + os públicos baixados do iptv-org (externos.json)
+let canais = [], porId = new Map(), externos = { canais: [], epgExterno: [] };
+function recarregar() {
+  const meus = JSON.parse(fs.readFileSync(path.join(RAIZ, 'channels.json'), 'utf8'));
+  for (const c of meus) {
+    if (!/^[a-z0-9_-]+$/.test(c.id)) throw new Error(`id inválido em channels.json: "${c.id}"`);
+  }
+  try { externos = JSON.parse(fs.readFileSync(atualizador.SAIDA, 'utf8')); } catch {}
+  canais = [...meus, ...externos.canais];
+  porId = new Map(canais.map(c => [c.id, c]));
 }
-const porId = new Map(canais.map(c => [c.id, c]));
+recarregar();
 const rodando = new Map(); // id -> { proc, ultimoAcesso }
+
+// ---------- atualização diária da lista pública ----------
+
+let atualizando = false;
+async function atualizarSePreciso() {
+  if (atualizando || !atualizador.precisaAtualizar()) return;
+  atualizando = true;
+  try {
+    await atualizador.atualizar();
+    recarregar();
+  } catch (e) {
+    console.error(`[atualizar] ${e.message}`);
+  } finally {
+    atualizando = false;
+  }
+}
+atualizarSePreciso();
+setInterval(atualizarSePreciso, 3600_000); // confere de hora em hora se já passou o prazo
 
 fs.rmSync(HLS, { recursive: true, force: true });
 fs.mkdirSync(HLS, { recursive: true });
@@ -106,11 +136,19 @@ const esc = s => String(s).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;'
 
 function playlistM3U(req) {
   const base = baseUrl(req);
-  const linhas = [`#EXTM3U url-tvg="${comToken(`${base}/epg.xml`)}"`];
+  const guias = [comToken(`${base}/epg.xml`), ...(externos.epgExterno || [])];
+  const linhas = [`#EXTM3U url-tvg="${guias.join(',')}"`];
   for (const c of canais) {
     const logo = c.logo ? ` tvg-logo="${esc(c.logo)}"` : '';
-    linhas.push(`#EXTINF:-1 tvg-id="${c.id}" tvg-name="${esc(c.nome)}"${logo} group-title="${esc(c.grupo || 'Geral')}",${c.nome}`);
-    linhas.push(comToken(`${base}/hls/${c.id}/index.m3u8`));
+    linhas.push(`#EXTINF:-1 tvg-id="${esc(c.tvgId || c.id)}" tvg-name="${esc(c.nome)}"${logo} group-title="${esc(c.grupo || 'Geral')}",${c.nome}`);
+    if (c.tipo === 'direto') {
+      // apps de IPTV acessam a fonte direto, sem passar pela sua máquina
+      if (c.userAgent) linhas.push(`#EXTVLCOPT:http-user-agent=${c.userAgent}`);
+      if (c.referrer) linhas.push(`#EXTVLCOPT:http-referrer=${c.referrer}`);
+      linhas.push(c.origem);
+    } else {
+      linhas.push(comToken(`${base}/hls/${c.id}/index.m3u8`));
+    }
   }
   return linhas.join('\n') + '\n';
 }
@@ -125,11 +163,12 @@ function dataXmltv(d) {
 
 function epgXML() {
   const out = ['<?xml version="1.0" encoding="UTF-8"?>', '<tv generator-info-name="iptv-caseiro">'];
-  for (const c of canais) {
+  const locais = canais.filter(c => c.tipo !== 'direto'); // externos usam o EPG de epgExterno
+  for (const c of locais) {
     out.push(`  <channel id="${c.id}"><display-name>${esc(c.nome)}</display-name></channel>`);
   }
   // a programação em channels.json se repete todo dia; gera hoje e amanhã
-  for (const c of canais) {
+  for (const c of locais) {
     for (const diaExtra of [0, 1]) {
       for (const p of c.programacao || []) {
         const dia = new Date(); dia.setHours(0, 0, 0, 0); dia.setDate(dia.getDate() + diaExtra);
@@ -155,7 +194,7 @@ function enviar(res, status, corpo, tipo = 'text/plain; charset=utf-8', extra = 
 
 async function rotaHls(req, res, id, arquivo) {
   const c = porId.get(id);
-  if (!c || !/^(index\.m3u8|seg_\d+\.ts)$/.test(arquivo)) return enviar(res, 404, 'não encontrado');
+  if (!c || c.tipo === 'direto' || !/^(index\.m3u8|seg_\d+\.ts)$/.test(arquivo)) return enviar(res, 404, 'não encontrado');
   garantirRodando(c);
   const caminho = path.join(HLS, id, arquivo);
   if (arquivo === 'index.m3u8') {
@@ -168,17 +207,61 @@ async function rotaHls(req, res, id, arquivo) {
   fs.readFile(caminho, (err, dados) => err ? enviar(res, 404, 'segmento expirou') : enviar(res, 200, dados, TIPOS['.ts']));
 }
 
+// ---------- proxy para o player web ----------
+// Navegadores bloqueiam (CORS) a maioria dos streams públicos e não deixam mudar
+// User-Agent/Referer; o servidor busca por eles e reescreve as playlists HLS.
+
+const assinar = u => crypto.createHmac('sha256', SEGREDO).update(u).digest('base64url').slice(0, 22);
+const urlProxy = (id, u) => comToken(`/proxy/${id}?u=${encodeURIComponent(u)}&s=${assinar(u)}`);
+
+function reescreverM3U8(texto, base, id) {
+  const abs = u => new URL(u, base).href;
+  return texto.split(/\r?\n/).map(l => {
+    if (!l.trim()) return l;
+    if (l.startsWith('#')) return l.replace(/URI="([^"]+)"/g, (_, u) => `URI="${urlProxy(id, abs(u))}"`);
+    return urlProxy(id, abs(l.trim()));
+  }).join('\n');
+}
+
+async function rotaProxy(req, res, id, url) {
+  const c = porId.get(id);
+  if (!c || c.tipo !== 'direto') return enviar(res, 404, 'não encontrado');
+  const alvo = url.searchParams.get('u') || c.origem;
+  if (alvo !== c.origem && url.searchParams.get('s') !== assinar(alvo)) return enviar(res, 403, 'assinatura inválida');
+  const cab = { 'User-Agent': c.userAgent || 'Mozilla/5.0 (iptv-caseiro)' };
+  if (c.referrer) cab.Referer = c.referrer;
+  let r;
+  try {
+    r = await fetch(alvo, { headers: cab, signal: AbortSignal.timeout(15_000) });
+  } catch (e) {
+    return enviar(res, 502, `fonte fora do ar: ${e.cause?.code || e.message}`);
+  }
+  if (!r.ok) return enviar(res, 502, `fonte respondeu HTTP ${r.status}`);
+  const tipo = r.headers.get('content-type') || '';
+  if (/mpegurl/i.test(tipo) || /\.m3u8?(\?|$)/i.test(new URL(r.url).pathname + new URL(r.url).search)) {
+    const texto = await r.text();
+    return enviar(res, 200, reescreverM3U8(texto, r.url, id), TIPOS['.m3u8'], { 'Cache-Control': 'no-cache' });
+  }
+  res.writeHead(200, { 'Content-Type': tipo || 'video/mp2t', 'Access-Control-Allow-Origin': '*' });
+  Readable.fromWeb(r.body).on('error', () => res.destroy()).pipe(res);
+}
+
 http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://x');
   if (TOKEN && url.searchParams.get('token') !== TOKEN) return enviar(res, 401, 'token inválido');
 
   const hls = url.pathname.match(/^\/hls\/([a-z0-9_-]+)\/([^/]+)$/);
   if (hls) return rotaHls(req, res, hls[1], hls[2]);
+  const proxy = url.pathname.match(/^\/proxy\/([a-z0-9_-]+)$/);
+  if (proxy) return rotaProxy(req, res, proxy[1], url);
   if (url.pathname === '/playlist.m3u') return enviar(res, 200, playlistM3U(req), 'audio/x-mpegurl; charset=utf-8');
   if (url.pathname === '/epg.xml') return enviar(res, 200, epgXML(), 'application/xml; charset=utf-8');
   if (url.pathname === '/api/canais') {
-    const lista = canais.map(({ id, nome, grupo, logo }) => ({ id, nome, grupo, logo, aoVivo: rodando.has(id) }));
-    return enviar(res, 200, JSON.stringify(lista), 'application/json');
+    const lista = canais.map(({ id, nome, grupo, logo, tipo }) => ({
+      id, nome, grupo, logo, externo: tipo === 'direto', aoVivo: rodando.has(id),
+      src: tipo === 'direto' ? urlProxy(id, porId.get(id).origem) : comToken(`/hls/${id}/index.m3u8`),
+    }));
+    return enviar(res, 200, JSON.stringify({ atualizadoEm: externos.atualizadoEm, canais: lista }), 'application/json');
   }
 
   // arquivos estáticos do player web
