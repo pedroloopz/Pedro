@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Minha TV</title>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js"></script>
+<style>
+  :root { --fundo: #0f1115; --painel: #181b22; --texto: #e8e8ea; --suave: #8a8f9c; --destaque: #4f8cff; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, sans-serif; background: var(--fundo); color: var(--texto);
+         display: grid; grid-template-columns: 280px 1fr; height: 100vh; }
+  aside { background: var(--painel); overflow-y: auto; padding: 16px; }
+  h1 { font-size: 18px; margin: 0 0 16px; }
+  h2 { font-size: 12px; text-transform: uppercase; color: var(--suave); margin: 16px 0 6px; letter-spacing: .05em; }
+  button { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; padding: 10px 12px;
+           border: 0; border-radius: 8px; background: transparent; color: inherit; font: inherit; cursor: pointer; }
+  button:hover { background: #ffffff10; }
+  button.ativo { background: var(--destaque); }
+  .ao-vivo { width: 8px; height: 8px; border-radius: 50%; background: #e5484d; margin-left: auto; }
+  main { display: flex; flex-direction: column; padding: 16px; gap: 8px; min-width: 0; }
+  video { width: 100%; flex: 1; min-height: 0; background: #000; border-radius: 8px; }
+  #status { color: var(--suave); font-size: 14px; }
+  #m3u { font-size: 13px; color: var(--suave); }
+  #m3u code { color: var(--texto); }
+  @media (max-width: 700px) {
+    body { grid-template-columns: 1fr; grid-template-rows: auto 1fr; height: auto; }
+    main { order: -1; } video { flex: none; aspect-ratio: 16/9; }
+  }
+</style>
+</head>
+<body>
+<aside>
+  <h1>📺 Minha TV</h1>
+  <div id="lista"></div>
+</aside>
+<main>
+  <video id="video" controls autoplay playsinline></video>
+  <div id="status">Escolha um canal.</div>
+  <div id="m3u">Playlist para outros apps: <code id="link-m3u"></code></div>
+</main>
+<script>
+const token = new URLSearchParams(location.search).get('token');
+const comToken = u => token ? `${u}${u.includes('?') ? '&' : '?'}token=${encodeURIComponent(token)}` : u;
+const video = document.getElementById('video');
+const status = document.getElementById('status');
+let hls;
+
+document.getElementById('link-m3u').textContent = comToken(`${location.origin}/playlist.m3u`);
+
+function tocar(canal, botao) {
+  document.querySelectorAll('button.ativo').forEach(b => b.classList.remove('ativo'));
+  botao.classList.add('ativo');
+  status.textContent = `Sintonizando ${canal.nome}… (o primeiro acesso leva alguns segundos)`;
+  const src = comToken(`/hls/${canal.id}/index.m3u8`);
+  if (hls) hls.destroy();
+  if (window.Hls && Hls.isSupported()) {
+    hls = new Hls({ manifestLoadingMaxRetry: 6, manifestLoadingRetryDelay: 2000 });
+    hls.loadSource(src);
+    hls.attachMedia(video);
+    hls.on(Hls.Events.MANIFEST_PARSED, () => { status.textContent = `▶ ${canal.nome}`; video.play().catch(() => {}); });
+    hls.on(Hls.Events.ERROR, (_, d) => { if (d.fatal) status.textContent = `Erro no canal: ${d.details}`; });
+  } else {
+    video.src = src; // Safari/iOS tocam HLS nativamente
+    video.play().catch(() => {});
+    status.textContent = `▶ ${canal.nome}`;
+  }
+}
+
+fetch(comToken('/api/canais')).then(r => r.json()).then(canais => {
+  const lista = document.getElementById('lista');
+  const grupos = {};
+  for (const c of canais) (grupos[c.grupo || 'Geral'] ||= []).push(c);
+  for (const [grupo, itens] of Object.entries(grupos)) {
+    const h = document.createElement('h2'); h.textContent = grupo; lista.append(h);
+    for (const c of itens) {
+      const b = document.createElement('button');
+      b.textContent = c.nome;
+      if (c.aoVivo) { const p = document.createElement('span'); p.className = 'ao-vivo'; p.title = 'no ar'; b.append(p); }
+      b.onclick = () => tocar(c, b);
+      lista.append(b);
+    }
+  }
+}).catch(() => { status.textContent = 'Não consegui carregar os canais. O servidor está rodando?'; });
+</script>
+</body>
+</html>
