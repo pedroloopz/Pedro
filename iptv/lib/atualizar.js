@@ -123,7 +123,7 @@ function agrupar(itens) {
     let id = base;
     for (let n = 2; ids.has(id); n++) id = `${base}-${n}`;
     ids.add(id);
-    const grupo = (c.attrs['group-title'] || '').split(';')[0];
+    const grupo = links.find(l => l.grupoFixo)?.grupoFixo || (c.attrs['group-title'] || '').split(';')[0];
     return {
       id,
       nome: nomeLimpo(c.nome),
@@ -149,11 +149,13 @@ async function atualizar() {
     console.log(`[atualizar] baixando ${cfg.listas.length} lista(s)…`);
 
     const brutos = [];
-    for (const url of cfg.listas) {
+    // cada lista é uma URL ou { url, grupo }: o grupo fixo junta os canais por país/idioma
+    for (const lista of cfg.listas) {
+      const { url, grupo } = typeof lista === 'string' ? { url: lista } : lista;
       try {
         const itens = lerM3U(await baixar(url));
         console.log(`  ${url}: ${itens.length} links`);
-        brutos.push(...itens);
+        brutos.push(...itens.map(i => ({ ...i, grupoFixo: grupo })));
       } catch (e) {
         console.warn(`  ${e.message}`);
       }

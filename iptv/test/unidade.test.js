@@ -65,6 +65,8 @@ test('agrupa links do mesmo canal com a melhor qualidade primeiro', () => {
   assert.equal(a.nome, 'Canal A');
   assert.deepEqual(a.origens.map(o => o.url), ['http://a/1080.m3u8', 'http://a/480.m3u8', 'http://a/hd.m3u8']);
   assert.equal(lista.find(c => c.nome === 'Canal B').grupo, 'Outros');
+  const fixo = agrupar(lerM3U('#EXTINF:-1 group-title="News",Tagesschau\nhttp://de/1.m3u8').map(i => ({ ...i, grupoFixo: 'Alemanha' })));
+  assert.equal(fixo[0].grupo, 'Alemanha');
   assert.match(a.id, /^x-/);
 });
 

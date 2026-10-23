@@ -5,7 +5,7 @@ Servidor IPTV feito do zero, sem dependências (só **Node 20+** e **ffmpeg**):
 - 📺 **Seus vídeos viram canais ao vivo** que seguem o relógio, como TV de verdade, com guia de programação automático.
 - 💬 **Legendas selecionáveis** (japonês, português…) no mesmo canal: liga, desliga e troca no player.
 - 📶 **Várias qualidades** (1080p/720p/480p/360p) com troca automática conforme a internet, e **codificação pela placa de vídeo**.
-- 🌐 **Canais públicos** do [iptv-org](https://github.com/iptv-org/iptv) e do [Free-TV](https://github.com/Free-TV/IPTV), atualizados a cada 6 h, retestados a cada 15 min e com **troca automática para o link reserva**.
+- 🌐 **Canais públicos** (Brasil, Portugal, Japão e Alemanha) do [iptv-org](https://github.com/iptv-org/iptv) e do [Free-TV](https://github.com/Free-TV/IPTV), atualizados a cada 6 h, retestados a cada 15 min e com **troca automática para o link reserva**.
 - 🎬 **Filmes e séries sob demanda**, com capa e sinopse (TMDB) e "continuar de onde parou".
 - 📱 **API Xtream Codes**: TiviMate, IPTV Smarters e XCIPTV entram só com servidor + usuário + senha.
 - ⚙️ **Painel web** para favoritos, numeração, canais ocultos, usuários e ajustes, aplicados sem reiniciar.
@@ -144,7 +144,7 @@ link em uso cai, passa para o reserva sozinho, inclusive no meio de uma requisi�
 
 | Campo | Padrão | O que faz |
 |---|---|---|
-| `listas` | iptv-org (Brasil, português, japonês) + Free-TV (Brasil, Portugal, Japão) | URLs `.m3u` |
+| `listas` | iptv-org e Free-TV: Brasil, Portugal, Japão e Alemanha | URLs `.m3u`, ou `{ "url": "…", "grupo": "Alemanha" }` para juntar os canais da lista num grupo |
 | `atualizarACadaHoras` | `6` | intervalo entre downloads |
 | `excluirGrupos` | `[]` | ex.: `["Shop", "Religious"]` |
 | `excluirNaoVinteQuatroHoras` | `false` | remove canais `[Not 24/7]` |
@@ -156,6 +156,7 @@ link em uso cai, passa para o reserva sozinho, inclusive no meio de uma requisi�
 - Mais listas = mais links reserva. O mesmo canal em listas diferentes (mesmo `tvg-id`), ou em
   qualidades diferentes (`@SD`/`@HD`), vira reserva automaticamente.
 - Links do YouTube são ignorados (players de IPTV não tocam).
+- Muitos canais alemães (ARD, ZDF, arte…) e japoneses só tocam dentro do próprio país (marcados `[Geo-blocked]`/Ⓖ nas listas); fora de lá aparecem mas não abrem.
 - Se `iptv-org.github.io` estiver bloqueado na sua rede, o mesmo arquivo é baixado de `raw.githubusercontent.com`.
 - Forçar agora: painel → **Atualizar lista pública agora**, ou `node atualizar.js`.
 
