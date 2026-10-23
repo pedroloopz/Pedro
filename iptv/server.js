@@ -17,6 +17,7 @@ const epg = require('./lib/epg');
 const biblioteca = require('./lib/biblioteca');
 const legendas = require('./lib/legendas');
 const xtream = require('./lib/xtream');
+const transcricao = require('./lib/transcricao');
 const { sondar } = require('./lib/midia');
 
 const PORTA = Number(process.env.PORT) || 8080;
@@ -95,6 +96,9 @@ atualizarSePreciso();
 setInterval(() => atualizarSePreciso(), 10 * 60_000);
 setInterval(() => verificarSePreciso(), 60_000);
 setInterval(() => { biblioteca.escanear(); atualizarGrades(); }, 10 * 60_000);
+// legendas automáticas em japonês (se ativadas): procura vídeos novos sem legenda
+setTimeout(() => transcricao.varrer().catch(e => console.warn(`[transcrição] ${e.message}`)), 20_000);
+setInterval(() => transcricao.varrer().catch(e => console.warn(`[transcrição] ${e.message}`)), 30 * 60_000);
 transmissao.vigiarOciosos(cfg.ociosoSegundos);
 
 // ---------- utilitários HTTP ----------
@@ -220,8 +224,9 @@ async function rotaVod(req, res, item, resto, token) {
   const fontes = () => sondar(item.arquivo).catch(() => null)
     .then(info => legendas.descobrir(item.arquivo, info, cfg.idiomaLegendaPadrao));
   if (resto === '/legendas.json') {
-    return json(res, Object.keys(await fontes()).map(i => ({ idioma: i, nome: legendas.nomeIdioma(i),
-      url: comToken(`/vod/${item.id}/legenda/${i}.vtt`, token) })));
+    const achadas = await fontes();
+    return json(res, Object.keys(achadas).map(i => ({ idioma: i, codigo: legendas.codigoIdioma(i), nome: legendas.nomeIdioma(i),
+      automatica: Boolean(achadas[i].auto), url: comToken(`/vod/${item.id}/legenda/${i}.vtt`, token) })));
   }
   const m = resto.match(/^\/legenda\/([a-z]{2,3})\.vtt$/);
   if (m) {
@@ -249,6 +254,7 @@ function estadoAdmin() {
     listaAtualizadaEm: canais.atualizadoEm(),
     biblioteca: { filmes: biblioteca.filmes().length, series: biblioteca.series().length },
     acessoLivre: auth.aberto(),
+    transcricao: transcricao.resumo(),
   };
 }
 
@@ -273,6 +279,11 @@ async function rotaAdmin(req, res, rota) {
     if (req.method === 'POST' && rota === 'verificar') { verificarSePreciso(true); return json(res, { ok: true, msg: 'verificação iniciada' }); }
     if (req.method === 'POST' && rota === 'biblioteca') { biblioteca.escanear(); return json(res, { ok: true, filmes: biblioteca.filmes().length, series: biblioteca.series().length }); }
     if (req.method === 'POST' && rota === 'gerar-senha') return json(res, { senha: auth.gerarSenha() });
+    if (req.method === 'POST' && rota === 'transcrever') {
+      if (!cfg.transcricao.ativo) throw new Error('ative "transcricao.ativo" em Ajustes (config.json) primeiro');
+      const r = await transcricao.repetirErros();
+      return json(res, { ok: true, msg: `procurando vídeos sem legenda japonesa (${r.fila} na fila)` });
+    }
   } catch (e) {
     return json(res, { erro: e.message }, 400);
   }

@@ -20,6 +20,8 @@ const cod = require('../lib/codificador');
 const { temporadaEpisodio, tituloEAno } = require('../lib/biblioteca');
 const { tituloDoArquivo } = require('../lib/midia');
 const { lerPlaylist } = require('../lib/transmissao');
+const { escolherAudio } = require('../lib/transcricao');
+const { execFileSync } = require('child_process');
 
 test('lê M3U com atributos, User-Agent e Referer', () => {
   const itens = lerM3U([
@@ -187,4 +189,41 @@ test('lê playlist do ffmpeg com sequência', () => {
   fs.writeFileSync(f, '#EXTM3U\n#EXT-X-MEDIA-SEQUENCE:5\n#EXTINF:4.000000,\nq0_00005.ts\n#EXTINF:3.5,\nq0_00006.ts\n');
   assert.deepEqual(lerPlaylist(f), { seq: 5, segs: [{ dur: 4, uri: 'q0_00005.ts' }, { dur: 3.5, uri: 'q0_00006.ts' }] });
   assert.equal(lerPlaylist(path.join(RAIZ, 'nao-existe.m3u8')), null);
+});
+
+test('legenda automática: idioma da furigana, faixa de áudio e pasta das transcrições', () => {
+  assert.equal(legendas.normalizarIdioma('ja-furigana'), 'jf');
+  assert.equal(legendas.codigoIdioma('jf'), 'ja-Hrkt');
+  assert.deepEqual(escolherAudio({ audios: [{ indice: 0, idioma: 'por' }, { indice: 1, idioma: 'jpn' }] }), { indice: 1, conferir: false });
+  assert.equal(escolherAudio({ audios: [{ indice: 0, idioma: 'por' }, { indice: 1, idioma: 'eng' }] }), null);
+  assert.deepEqual(escolherAudio({ audios: [{ indice: 0, idioma: 'und' }] }), { indice: 0, conferir: true });
+
+  const dir = fs.mkdtempSync(path.join(RAIZ, 'auto-'));
+  const video = path.join(dir, 'Anime 01.mkv');
+  fs.writeFileSync(video, 'x');
+  const auto = legendas.pastaAuto(video);
+  fs.mkdirSync(auto, { recursive: true });
+  fs.writeFileSync(path.join(auto, 'ja.srt'), '');
+  fs.writeFileSync(path.join(auto, 'jf.srt'), '');
+  let f = legendas.descobrir(video, null, 'pt');
+  assert.equal(f.ja.auto, true);
+  assert.equal(f.jf.auto, true);
+  fs.writeFileSync(path.join(dir, 'Anime 01.ja.srt'), ''); // a sua legenda ganha da automática
+  f = legendas.descobrir(video, null, 'pt');
+  assert.equal(f.ja.auto, undefined);
+});
+
+// roda só se o Python tiver o MeCab (pip install fugashi unidic-lite)
+const python = process.env.IPTV_PYTHON || 'python3';
+let temMecab = false;
+try { execFileSync(python, ['-c', 'import fugashi, unidic_lite'], { stdio: 'ignore' }); temMecab = true; } catch {}
+test('furigana: leitura pelo contexto e só nos kanji', { skip: !temMecab && 'fugashi/unidic-lite não instalados' }, () => {
+  const ent = path.join(RAIZ, 'f.srt'), sai = path.join(RAIZ, 'f2.srt');
+  fs.writeFileSync(ent, '1\n00:00:01,000 --> 00:00:03,000\n今日は天気がいい。日本語を勉強して、食べ物を食べた。\n');
+  execFileSync(python, [path.join(__dirname, '..', 'scripts', 'furigana.py'), ent, sai]);
+  const texto = fs.readFileSync(sai, 'utf8');
+  assert.match(texto, /今日（きょう）は天気（てんき）がいい/);
+  assert.match(texto, /日本語（にほんご）を勉強（べんきょう）して/);
+  assert.match(texto, /食（た）べ物（もの）を食（た）べた/);
+  assert.match(texto, /00:00:01,000 --> 00:00:03,000/);
 });

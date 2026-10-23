@@ -36,6 +36,9 @@ const PADRAO = {
     idiomaLegendaPadrao: 'pt',
     https: { cert: '', key: '' },
     epgIptvOrg: { ativo: false, dias: 2, conexoes: 5 },
+    // legenda automática em japonês (precisa de faster-whisper ou whisper.cpp; veja o README)
+    transcricao: { ativo: false, motor: 'faster-whisper', modelo: 'small', dispositivo: 'auto',
+      python: 'python3', whisperCpp: 'whisper-cli', furigana: true, detectarIdioma: true },
   },
   fontes: {
     atualizarACadaHoras: 6,
@@ -80,6 +83,7 @@ const config = () => {
   const c = { ...PADRAO.config, ...lerJson(P.config, {}) };
   c.https = { ...PADRAO.config.https, ...c.https };
   c.epgIptvOrg = { ...PADRAO.config.epgIptvOrg, ...c.epgIptvOrg };
+  c.transcricao = { ...PADRAO.config.transcricao, ...c.transcricao };
   if (process.env.IPTV_CERT) c.https = { cert: process.env.IPTV_CERT, key: process.env.IPTV_KEY };
   return c;
 };

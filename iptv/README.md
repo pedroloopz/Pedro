@@ -3,7 +3,7 @@
 Servidor IPTV feito do zero, sem dependências (só **Node 20+** e **ffmpeg**):
 
 - 📺 **Seus vídeos viram canais ao vivo** que seguem o relógio, como TV de verdade, com guia de programação automático.
-- 💬 **Legendas selecionáveis** (japonês, português…) no mesmo canal: liga, desliga e troca no player.
+- 💬 **Legendas selecionáveis** (japonês, português…) no mesmo canal, e **legenda automática em japonês com furigana** para vídeos sem legenda.
 - 📶 **Várias qualidades** (1080p/720p/480p/360p) com troca automática conforme a internet, e **codificação pela placa de vídeo**.
 - 🌐 **Canais públicos** (Brasil, Portugal, Japão e Alemanha) do [iptv-org](https://github.com/iptv-org/iptv) e do [Free-TV](https://github.com/Free-TV/IPTV), atualizados a cada 6 h, retestados a cada 15 min e com **troca automática para o link reserva**.
 - 🎬 **Filmes e séries sob demanda**, com capa e sinopse (TMDB) e "continuar de onde parou".
@@ -121,6 +121,37 @@ midia/minha-serie/
 Para treinar japonês, prefira legenda em japonês, não em português: num estudo, legenda no
 idioma estrangeiro ajudou a entender a fala e legenda na língua materna atrapalhou
 ([Mitterer & McQueen, 2009](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0007785)).
+
+### Legenda automática em japonês
+
+Para vídeos com **áudio em japonês** sem legenda japonesa, o servidor transcreve o áudio com o
+[Whisper](https://github.com/openai/whisper) (no seu computador, de graça) e cria duas faixas:
+
+- **日本語 · automática**: 今日は天気がいいですね。
+- **日本語 (ふりがな) · automática**: 今日（きょう）は天気（てんき）がいいですね。
+
+A leitura da furigana vem da análise do MeCab, que considera o contexto (今日は = きょうは, não こんにちは).
+
+**Instalação (uma vez):**
+
+```bash
+pip install faster-whisper fugashi unidic-lite
+```
+
+No `config.json` (ou painel → Ajustes):
+
+```json
+"transcricao": { "ativo": true, "modelo": "small", "dispositivo": "auto", "python": "python3", "furigana": true }
+```
+
+- Funciona nos canais `arquivo`/`pasta` e na biblioteca. Um vídeo por vez, em segundo plano; vídeos novos entram sozinhos a cada 30 min (ou painel → **Gerar legendas japonesas agora**).
+- O áudio é conferido antes: faixa marcada como japonesa é transcrita direto; sem marca, o Whisper detecta o idioma e pula se não for japonês. Em arquivos com dois áudios (dublado + original), usa a faixa japonesa.
+- Legenda feita por você (`Ep01.ja.srt`) sempre tem prioridade; a automática fica em `dados/transcricoes/` e a pasta dos seus vídeos não é alterada.
+- Nos filmes e séries a legenda aparece na hora; num canal ao vivo, na próxima vez que ele ligar.
+- **Modelo:** maior = mais preciso e mais lento ([tabela oficial](https://github.com/openai/whisper#available-models-and-languages)). Sem placa de vídeo, comece com `small`; com placa NVIDIA, `large-v3`, com `"dispositivo": "cuda"` (precisa das bibliotecas CUDA indicadas no [faster-whisper](https://github.com/SYSTRAN/faster-whisper#gpu)). Na primeira vez, o modelo é baixado da internet.
+- Transcrição automática erra, principalmente com música alta, falas sobrepostas e nomes próprios.
+- Alternativa sem Python para a transcrição: [whisper.cpp](https://github.com/ggml-org/whisper.cpp), com `"motor": "whisper.cpp"`, `"whisperCpp": "whisper-cli"` e `"modelo": "/caminho/ggml-small.bin"` (a furigana continua precisando do Python com fugashi).
+- Windows: use `"python": "python"` (ou `py`).
 
 ## Qualidade e placa de vídeo (`config.json`)
 
@@ -248,6 +279,7 @@ docker compose logs -f
   execução, os exemplos são copiados para lá.
 - Monte suas pastas de vídeo e biblioteca descomentando as linhas `volumes` do `docker-compose.yml`.
 - Placa de vídeo Intel/AMD: descomente `devices: /dev/dri` e use `"aceleracao": "vaapi"`.
+- Legenda automática em japonês: mude `TRANSCRICAO: "1"` no `docker-compose.yml` e rode `docker compose up -d --build` (os modelos ficam em `dados-docker/modelos`).
 - O Docker vigia `/saude` e reinicia o container se travar (`restart: unless-stopped`).
 
 Sem Docker, no Linux, um serviço do systemd faz o mesmo:
@@ -297,6 +329,7 @@ rodam sozinhos no GitHub Actions (`.github/workflows/iptv.yml`) a cada mudança 
 | `lib/epg.js` | guia XMLTV e coletor do iptv-org |
 | `lib/biblioteca.js` | filmes, séries e TMDB |
 | `lib/xtream.js` | API Xtream Codes |
+| `lib/transcricao.js`, `scripts/*.py` | legenda automática em japonês (Whisper) e furigana (MeCab) |
 | `lib/auth.js` | usuários e limite de tentativas |
 | `lib/canais.js` | lista única de canais com favoritos e numeração |
 | `lib/config.js`, `lib/midia.js` | arquivos de configuração; ffprobe com cache |

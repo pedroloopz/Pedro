@@ -266,7 +266,7 @@ class Transmissao {
     const linhas = ['#EXTM3U', '#EXT-X-VERSION:3', '#EXT-X-INDEPENDENT-SEGMENTS'];
     const padrao = legendas.normalizarIdioma(this.c.idiomaLegenda || this.cfg.idiomaLegendaPadrao);
     for (const i of this.idiomas) {
-      linhas.push(`#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subs",NAME="${legendas.nomeIdioma(i)}",LANGUAGE="${i}",` +
+      linhas.push(`#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subs",NAME="${legendas.nomeIdioma(i)}",LANGUAGE="${legendas.codigoIdioma(i)}",` +
         `DEFAULT=${i === padrao ? 'YES' : 'NO'},AUTOSELECT=YES,FORCED=NO,URI="sub_${i}.m3u8"`);
     }
     this.qs.forEach((q, i) => {

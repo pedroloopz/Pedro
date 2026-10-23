@@ -92,6 +92,7 @@ const daUrl = new URLSearchParams(location.search).get('token');
 if (daUrl) { guardar('token', daUrl); history.replaceState(null, '', location.pathname); }
 let token = lembrar('token', '');
 const comToken = u => token && !u.includes('token=') ? `${u}${u.includes('?') ? '&' : '?'}token=${encodeURIComponent(token)}` : u;
+const idiomaPref = l => (l === 'ja-Hrkt' ? 'jf' : l);
 const semAcento = s => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
 let aba = 'tv', canais = [], bib = { filmes: [], series: [] }, hls = null, atual = null, serieAberta = null;
@@ -147,7 +148,7 @@ function tocarAoVivo(c) {
       const pref = lembrar('legenda', null);
       let idx = hls.subtitleTracks.findIndex(t => t.default);
       if (pref === 'nenhuma') idx = -1;
-      else if (pref && hls.subtitleTracks.some(t => t.lang === pref)) idx = hls.subtitleTracks.findIndex(t => t.lang === pref);
+      else if (pref && hls.subtitleTracks.some(t => idiomaPref(t.lang) === pref)) idx = hls.subtitleTracks.findIndex(t => idiomaPref(t.lang) === pref);
       hls.subtitleTrack = idx;
       selLeg.value = idx;
     });
@@ -164,10 +165,10 @@ selLeg.onchange = () => {
   const i = Number(selLeg.value);
   if (hls) {
     hls.subtitleTrack = i;
-    guardar('legenda', i < 0 ? 'nenhuma' : hls.subtitleTracks[i].lang);
+    guardar('legenda', i < 0 ? 'nenhuma' : idiomaPref(hls.subtitleTracks[i].lang));
   } else {
     [...video.textTracks].forEach((t, j) => { t.mode = j === i ? 'showing' : 'disabled'; });
-    guardar('legenda', i < 0 ? 'nenhuma' : video.textTracks[i]?.language);
+    guardar('legenda', i < 0 ? 'nenhuma' : idiomaPref(video.textTracks[i]?.language));
   }
 };
 selQual.onchange = () => { if (hls) hls.currentLevel = Number(selQual.value); };
@@ -182,9 +183,10 @@ async function tocarArquivo(x, titulo) {
     const pref = lembrar('legenda', null);
     legs.forEach((l, i) => {
       const t = document.createElement('track');
-      Object.assign(t, { kind: 'subtitles', srclang: l.idioma, label: l.nome, src: l.url });
+      const nome = l.nome + (l.automatica ? ' · automática' : '');
+      Object.assign(t, { kind: 'subtitles', srclang: l.codigo || l.idioma, label: nome, src: l.url });
       video.append(t);
-      selLeg.append(new Option(l.nome, i));
+      selLeg.append(new Option(nome, i));
     });
     // mostra a legenda preferida (ou a primeira) quando as faixas carregarem
     setTimeout(() => {

@@ -35,6 +35,7 @@ async function sondar(arquivo) {
   const info = {
     duracao: Number(json.format?.duration) || 0,
     altura: streams.find(s => s.codec_type === 'video')?.height || 0,
+    audios: streams.filter(s => s.codec_type === 'audio').map((s, i) => ({ indice: i, idioma: s.tags?.language || 'und' })),
   };
   // o índice relativo (0:s:N) conta todas as legendas, inclusive as de imagem
   const todas = streams.filter(s => s.codec_type === 'subtitle');

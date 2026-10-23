@@ -15,12 +15,24 @@ const ADMIN = 'senha-admin-123';
 const SALA = 'senha-da-sala-1';
 let servidor, fonte, portaFonte, log = '';
 
-function video(arquivo, segundos, freq = 440) {
+function video(arquivo, segundos, freq = 440, idiomaAudio) {
   fs.mkdirSync(path.dirname(arquivo), { recursive: true });
   execFileSync('ffmpeg', ['-v', 'error', '-y', '-f', 'lavfi', '-i', 'testsrc=size=320x180:rate=25',
     '-f', 'lavfi', '-i', `sine=frequency=${freq}`, '-t', String(segundos), '-c:v', 'libx264', '-preset', 'ultrafast',
-    '-c:a', 'aac', arquivo]);
+    '-c:a', 'aac', ...(idiomaAudio ? ['-metadata:s:a:0', `language=${idiomaAudio}`] : []), arquivo]);
 }
+
+// "python" de mentira: faz o papel do Whisper e do MeCab sem baixar modelos
+const PYTHON_FALSO = `#!/usr/bin/env node
+const fs = require('fs');
+const [script, ...a] = process.argv.slice(2);
+if (script.endsWith('transcrever.py')) {
+  if (a.includes('--detectar')) { console.log(JSON.stringify({ idioma: 'pt' })); process.exit(3); }
+  fs.writeFileSync(a[1], '1\\n00:00:00,500 --> 00:00:02,000\\n今日は\\n');
+  console.log('{"falas":1}');
+} else if (script.endsWith('furigana.py')) {
+  fs.writeFileSync(a[1], '1\\n00:00:00,500 --> 00:00:02,000\\n今日（きょう）は\\n');
+}`;
 const srt = (arquivo, texto) => fs.writeFileSync(arquivo, `1\n00:00:00,500 --> 00:00:05,500\n${texto}\n`);
 
 const get = (rota, opcoes = {}) => fetch(rota.startsWith('http') ? rota : BASE + rota, { redirect: 'manual', ...opcoes });
@@ -56,7 +68,7 @@ before(async () => {
     srt(path.join(RAIZ, 'midia/serie', `Ep0${n}.ja.srt`), `こんにちは ${n}`);
     srt(path.join(RAIZ, 'midia/serie', `Ep0${n}.pt.srt`), `Olá ${n}`);
   }
-  video(path.join(RAIZ, 'biblioteca/filmes/Filme Teste (2020).mp4'), 3);
+  video(path.join(RAIZ, 'biblioteca/filmes/Filme Teste (2020).mp4'), 3, 440, 'jpn');
   srt(path.join(RAIZ, 'biblioteca/filmes/Filme Teste (2020).pt.srt'), 'Legenda do filme');
   video(path.join(RAIZ, 'biblioteca/series/Minha Serie/S01E01.mp4'), 2);
   video(path.join(RAIZ, 'biblioteca/series/Minha Serie/S01E02.mp4'), 2);
@@ -64,7 +76,9 @@ before(async () => {
   const json = (f, d) => fs.writeFileSync(path.join(RAIZ, f), JSON.stringify(d));
   json('channels.json', [{ id: 'serie', nome: 'Série', grupo: 'Japonês', tipo: 'pasta', origem: 'midia/serie', idiomaLegenda: 'ja' }]);
   json('fontes.json', { listas: [`http://127.0.0.1:${portaFonte}/lista.m3u`], testarStreams: false });
-  json('config.json', { qualidades: ['480p', '360p'], segundosSegmento: 2 });
+  fs.writeFileSync(path.join(RAIZ, 'python-falso'), PYTHON_FALSO, { mode: 0o755 });
+  json('config.json', { qualidades: ['480p', '360p'], segundosSegmento: 2,
+    transcricao: { ativo: true, python: path.join(RAIZ, 'python-falso') } });
   json('usuarios.json', [{ usuario: 'pedro', senha: ADMIN, admin: true }, { usuario: 'sala', senha: SALA }]);
 
   servidor = spawn(process.execPath, [path.join(__dirname, '..', 'server.js')], {
@@ -191,4 +205,23 @@ test('painel: só administrador; favoritos aplicados sem reiniciar; validação'
   assert.match((await ruim.json()).erro, /id inválido/);
   const semAdmin = await put('usuarios', [{ usuario: 'so', senha: 'senha-qualquer' }]);
   assert.equal(semAdmin.status, 400);
+});
+
+test('legenda automática em japonês: transcreve o filme japonês, pula áudio em outro idioma', async () => {
+  const post = rota => get(tok(`/api/admin/${rota}`), { method: 'POST' });
+  assert.equal((await post('transcrever')).status, 200);
+  let t;
+  for (let i = 0; i < 100; i++) {
+    t = (await (await get(tok('/api/admin/estado'))).json()).transcricao;
+    if (t.fila === 0 && !t.atual && t.feitas + t.naoJapones >= 3) break;
+    await new Promise(r => setTimeout(r, 200));
+  }
+  assert.equal(t.feitas, 1, JSON.stringify(t));      // o filme (áudio marcado como japonês)
+  assert.equal(t.naoJapones, 2, JSON.stringify(t));  // os episódios (áudio sem marca, "detectado" como pt)
+  const bib = await (await get(tok('/api/biblioteca'))).json();
+  const legs = await (await get(bib.filmes[0].legendas)).json();
+  assert.deepEqual(legs.map(l => [l.idioma, l.automatica]), [['pt', false], ['ja', true], ['jf', true]]);
+  assert.equal(legs.find(l => l.idioma === 'jf').codigo, 'ja-Hrkt');
+  const vtt = await (await get(legs.find(l => l.idioma === 'jf').url)).text();
+  assert.match(vtt, /今日（きょう）は/);
 });

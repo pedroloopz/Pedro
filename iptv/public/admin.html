@@ -66,7 +66,9 @@
         <button class="primario" data-acao="atualizar">Atualizar lista pública agora</button>
         <button data-acao="verificar">Testar links agora</button>
         <button data-acao="biblioteca">Reler biblioteca</button>
+        <button data-acao="transcrever">Gerar legendas japonesas agora</button>
       </div>
+      <p class="ajuda" id="info-transcricao"></p>
       <p class="ajuda" id="aviso-livre"></p>
     </section>
 
@@ -178,6 +180,12 @@ function cartoes() {
     d.append(Object.assign(document.createElement('span'), { textContent: t }), Object.assign(document.createElement('b'), { textContent: v }));
     return d;
   }));
+  const t = estado.transcricao;
+  $('#info-transcricao').textContent = !t.ativo
+    ? 'Legenda automática em japonês: desligada (Ajustes → "transcricao": { "ativo": true }).'
+    : `Legenda automática (${t.motor}, modelo ${t.modelo}): ${t.feitas} prontas · ${t.fila} na fila` +
+      `${t.atual ? ` · transcrevendo "${t.atual}"` : ''} · ${t.naoJapones} sem áudio japonês · ${t.erros} com erro` +
+      `${t.ultimoErro ? ` (último: ${t.ultimoErro})` : ''}`;
   $('#aviso-livre').textContent = estado.acessoLivre
     ? '⚠ Sem usuários cadastrados: qualquer um na sua rede abre a TV e este painel. Crie um usuário administrador em "Usuários".' : '';
 }

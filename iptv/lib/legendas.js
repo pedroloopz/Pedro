@@ -11,16 +11,30 @@ const EXT = ['.srt', '.ass', '.ssa', '.vtt'];
 
 const ISO3 = { jpn: 'ja', por: 'pt', pob: 'pt', eng: 'en', spa: 'es', fre: 'fr', fra: 'fr', ger: 'de', deu: 'de',
   ita: 'it', kor: 'ko', chi: 'zh', zho: 'zh', rus: 'ru' };
-const NOMES = { ja: '日本語', pt: 'Português', en: 'English', es: 'Español', fr: 'Français', de: 'Deutsch',
+const NOMES = { jf: '日本語 (ふりがな)', ja: '日本語', pt: 'Português', en: 'English', es: 'Español', fr: 'Français', de: 'Deutsch',
   it: 'Italiano', ko: '한국어', zh: '中文', ru: 'Русский' };
 
 function normalizarIdioma(i) {
   const s = String(i || '').toLowerCase().replace(/_/g, '-');
   if (s === 'pt-br' || s === 'ptbr') return 'pt';
+  // faixa japonesa com a leitura em hiragana: Ep01.ja-furigana.srt
+  if (['jf', 'ja-furigana', 'furigana', 'ja-hrkt', 'ja-kana'].includes(s)) return 'jf';
   const base = s.split('-')[0];
   return ISO3[base] || (/^[a-z]{2}$/.test(base) ? base : null);
 }
 const nomeIdioma = i => NOMES[i] || i.toUpperCase();
+// código de idioma para players (BCP 47): a furigana é japonês escrito em kana
+const codigoIdioma = i => (i === 'jf' ? 'ja-Hrkt' : i);
+
+// transcrições automáticas ficam em dados/transcricoes/<id do arquivo>/ (nunca na pasta dos seus vídeos)
+function pastaAuto(video) {
+  try {
+    const st = fs.statSync(video);
+    return path.join(P.dados, 'transcricoes', crypto.createHash('sha1').update(`${video}|${st.size}|${Math.round(st.mtimeMs)}`).digest('hex').slice(0, 16));
+  } catch {
+    return null;
+  }
+}
 
 // Fontes de legenda de um vídeo: { pt: {arquivo}, ja: {embutida: 2} }
 // "Ep01.ja.srt" -> ja; "Ep01.srt" (sem idioma) -> idiomaPadrao
@@ -42,6 +56,12 @@ function descobrir(video, info, idiomaPadrao = 'pt') {
   for (const l of info?.legendas || []) {
     const idioma = normalizarIdioma(l.idioma) || (l.idioma === 'und' ? normalizarIdioma(idiomaPadrao) : null);
     if (idioma && !fontes[idioma]) fontes[idioma] = { embutida: l.indice };
+  }
+  // legenda feita por você sempre ganha da automática
+  const auto = pastaAuto(video);
+  for (const idioma of ['ja', 'jf']) {
+    const f = auto && path.join(auto, `${idioma}.srt`);
+    if (f && !fontes[idioma] && fs.existsSync(f)) fontes[idioma] = { arquivo: f, auto: true };
   }
   return fontes;
 }
@@ -124,4 +144,4 @@ function pedacoVtt(lista, ini, fim, ptsInicio, localInicio) {
   return linhas.join('\n');
 }
 
-module.exports = { descobrir, paraVtt, cues, lerVtt, pedacoVtt, normalizarIdioma, nomeIdioma, formatar, pareceUtf8 };
+module.exports = { descobrir, paraVtt, cues, lerVtt, pedacoVtt, normalizarIdioma, nomeIdioma, codigoIdioma, pastaAuto, formatar, pareceUtf8 };

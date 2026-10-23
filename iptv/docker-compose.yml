@@ -1,6 +1,9 @@
 services:
   iptv:
-    build: .
+    build:
+      context: .
+      args:
+        TRANSCRICAO: "0"     # "1" instala a legenda automática em japonês (Whisper + MeCab)
     container_name: iptv
     restart: unless-stopped
     ports:
