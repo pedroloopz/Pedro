@@ -3,6 +3,7 @@
 Servidor IPTV feito do zero, sem dependências (só **Node 20+** e **ffmpeg**):
 
 - 📺 **Seus vídeos viram canais ao vivo** que seguem o relógio, como TV de verdade, com guia de programação automático.
+- 🎓 **Modo estudo de japonês**: furigana, palavras tocáveis com significado, legenda dupla, repetir fala a fala e cartões para o Anki.
 - 💬 **Legendas selecionáveis** (japonês, português…) no mesmo canal, e **legenda automática em japonês com furigana** para vídeos sem legenda.
 - 📶 **Várias qualidades** (1080p/720p/480p/360p) com troca automática conforme a internet, e **codificação pela placa de vídeo**.
 - 🌐 **Canais públicos** (Brasil, Portugal, Japão e Alemanha) do [iptv-org](https://github.com/iptv-org/iptv) e do [Free-TV](https://github.com/Free-TV/IPTV), atualizados a cada 6 h, retestados a cada 15 min e com **troca automática para o link reserva**.
@@ -16,7 +17,64 @@ Servidor IPTV feito do zero, sem dependências (só **Node 20+** e **ffmpeg**):
 > públicas trazem links de todo tipo; os filtros de `fontes.json` (`excluirIpSolto`,
 > `excluirHosts`) ajudam a ficar só com fontes oficiais.
 
-## Começar
+## Sem computador: servidor grátis na Oracle Cloud, tudo pelo celular
+
+O IPTV precisa rodar 24 h em alguma máquina. Sem computador, a opção grátis é uma máquina
+virtual da Oracle Cloud (plano *Always Free*). Tudo abaixo se faz no navegador do celular.
+Os nomes dos botões podem mudar um pouco; o site também tem a opção de idioma português.
+
+**1. Criar a conta** (uns 10 min)
+1. Abra [signup.cloud.oracle.com](https://signup.cloud.oracle.com) e preencha país, nome e e-mail.
+2. **Região inicial (Home Region)** — não dá para trocar depois, e o plano grátis só vale nela:
+   - **Brazil East (São Paulo)**: menor atraso no Brasil;
+   - **Germany Central (Frankfurt)**: os canais alemães que só tocam na Alemanha passam a abrir (veja o passo 6).
+3. Cartão de crédito: só para verificação, não é cobrado no plano grátis; cartão pré-pago ou
+   virtual costuma ser recusado ([documentação da Oracle](https://docs.cloud.oracle.com/iaas/Content/GSG/Tasks/signingup_topic-Sign_Up_for_Free_Oracle_Cloud_Promotion.htm)).
+
+**2. Abrir o terminal da Oracle e criar a chave de acesso**
+1. No painel da Oracle, toque no ícone **>_** (Cloud Shell), no alto da tela.
+2. Cole e confirme (cria a chave e mostra a parte pública):
+   ```bash
+   ssh-keygen -t ed25519 -N "" -f ~/.ssh/id_ed25519 && cat ~/.ssh/id_ed25519.pub
+   ```
+3. Copie a linha que começa com `ssh-ed25519`.
+
+**3. Criar a máquina virtual**
+1. Menu **☰ → Compute → Instances → Create instance**.
+2. **Name:** `iptv`.
+3. **Image:** *Change image* → **Canonical Ubuntu** → 24.04.
+4. **Shape:** *Change shape* → **Ampere** → **VM.Standard.A1.Flex**, com **2 OCPU e 12 GB** (aparece o selo *Always Free-eligible*).
+   O limite grátis teria caído de 4 para 2 OCPU em 06/2026, segundo [relatos](https://tilnote.io/pages/6a5abd08760649367e9e43ad); confira na tela.
+5. **Networking:** deixe criar uma rede nova, com **Assign a public IPv4 address** ligado.
+6. **Add SSH keys:** *Paste public keys* → cole a linha `ssh-ed25519…` do passo 2.
+7. **Create**. Se aparecer *Out of capacity*, tente outro *Availability domain* ou mais tarde.
+8. Quando ficar verde (**Running**), copie o **Public IP address**.
+
+**4. Liberar a porta 8080 na rede da Oracle**
+1. Na página da máquina: **Primary VNIC → Subnet → Security Lists → Default Security List**.
+2. **Add Ingress Rules:** Source CIDR `0.0.0.0/0` · IP Protocol **TCP** · Destination Port Range `8080` → **Add**.
+
+**5. Instalar o IPTV** (5 a 10 min)
+1. No Cloud Shell: `ssh ubuntu@IP_PUBLICO` (troque pelo IP) e responda `yes`.
+2. Cole:
+   ```bash
+   curl -fsSL https://raw.githubusercontent.com/pedroloopz/pedro/ccr-04c18c47-o58eoe/iptv/instalar.sh | bash
+   ```
+3. No final aparecem o endereço do painel, o **usuário `admin`** e a **senha**: anote.
+
+**6. Usar**
+1. No celular: `http://IP_PUBLICO:8080/admin` → entre com admin e a senha → **Usuários → + Novo usuário** (ex.: `tv-sala`) → **Salvar**.
+2. No IPTV Smarters Pro: **Login with Xtream Codes API** → URL `http://IP_PUBLICO:8080`, usuário e senha criados.
+3. Servidor em Frankfurt? Em **Ajustes** (config.json), troque `"canaisPeloServidor"` para `"todos"`:
+   a imagem dos canais passa pelo servidor alemão e os canais que só tocam na Alemanha (ARD, ZDF,
+   Pluto TV alemã, como Nick e SpongeBob) abrem no Brasil. Gasta tráfego do servidor: o plano grátis
+   inclui até [10 TB por mês de saída](https://cloud.oracle.com/free) (um canal em 720p usa
+   em torno de 1 GB por hora). As emissoras limitam esses canais à Alemanha nos termos de uso delas.
+
+**Atualizar no futuro:** Cloud Shell → `ssh ubuntu@IP_PUBLICO` → o mesmo comando do passo 5.
+Seus canais, usuários e configurações ficam em `~/iptv-dados` e não são apagados.
+
+## Começar (com computador)
 
 ```bash
 # Ubuntu/Debian
@@ -153,6 +211,27 @@ No `config.json` (ou painel → Ajustes):
 - Alternativa sem Python para a transcrição: [whisper.cpp](https://github.com/ggml-org/whisper.cpp), com `"motor": "whisper.cpp"`, `"whisperCpp": "whisper-cli"` e `"modelo": "/caminho/ggml-small.bin"` (a furigana continua precisando do Python com fugashi).
 - Windows: use `"python": "python"` (ou `py`).
 
+## Modo estudo (japonês)
+
+No player web (navegador do celular, da TV ou do computador), toque em **🎓 Estudo** com um
+filme, episódio ou canal que tenha legenda japonesa (sua ou automática):
+
+- **Fala com furigana** sobre o vídeo, e as **palavras são tocáveis**: leitura, forma de dicionário
+  (行き → 行く), classe gramatical e significado (dicionário JMdict, em inglês), mais atalhos para o
+  Jisho e o Google Tradutor.
+- **2ª legenda** (ex.: português) logo abaixo, pareada com a fala japonesa — só em filmes e séries,
+  porque ao vivo o player carrega uma faixa de legenda por vez.
+- **⏮ Anterior · 🔁 Repetir · ⏭ Próxima** fala (teclas A, S, D), **pausar a cada fala** e velocidade 0,5×/0,75×.
+- **⭐ Salvar frase/palavra** → **📚 Cartões**, que ficam no servidor (cada usuário tem os seus, em
+  qualquer aparelho) e são exportados para o **Anki** (no Anki: **Arquivo → Importar**), com a furigana.
+
+Revisar com repetição espaçada melhora a memorização ([Cepeda et al., 2006](https://doi.org/10.1037/0033-2909.132.3.354)).
+
+Precisa do MeCab no servidor (`pip install fugashi unidic-lite`; o `instalar.sh` já instala).
+O dicionário (~palavras comuns do [JMdict](https://github.com/scriptin/jmdict-simplified)) é baixado
+sozinho na primeira vez; `"estudo": { "dicionario": false }` desliga. Os apps de TV (Smarters,
+TiviMate) não têm esses recursos: o modo estudo é do player web.
+
 ## Qualidade e placa de vídeo (`config.json`)
 
 | Campo | Padrão | Opções |
@@ -195,6 +274,11 @@ Na playlist, os canais públicos apontam para `/canal/<id>.m3u8` no seu servidor
 para o link no ar (a imagem não passa pela sua máquina). Fontes que exigem User-Agent/Referer,
 e o player web, passam pelo proxy do servidor. `"linksDiretos": true` no `config.json` põe o
 link original na playlist, mas aí não há troca automática.
+
+`"canaisPeloServidor"` decide quando a imagem dos canais públicos passa pelo servidor: `"geo"` (padrão)
+só os marcados como bloqueados por país, `"todos"` todos (útil com o servidor em outro país, como
+Frankfurt), `"nenhum"` nenhum. Muitos canais não vêm marcados nas listas; com o servidor fora do
+Brasil, prefira `"todos"`.
 
 ## Guia de programação
 
@@ -329,6 +413,8 @@ rodam sozinhos no GitHub Actions (`.github/workflows/iptv.yml`) a cada mudança 
 | `lib/epg.js` | guia XMLTV e coletor do iptv-org |
 | `lib/biblioteca.js` | filmes, séries e TMDB |
 | `lib/xtream.js` | API Xtream Codes |
+| `lib/estudo.js`, `scripts/estudo.py` | modo estudo: análise das falas, dicionário, cartões e Anki |
+| `instalar.sh` | instalação e atualização num servidor Ubuntu (Oracle Cloud etc.) |
 | `lib/transcricao.js`, `scripts/*.py` | legenda automática em japonês (Whisper) e furigana (MeCab) |
 | `lib/auth.js` | usuários e limite de tentativas |
 | `lib/canais.js` | lista única de canais com favoritos e numeração |
