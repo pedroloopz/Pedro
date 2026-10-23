@@ -5,8 +5,16 @@
     "grupo": "Exemplos",
     "tipo": "teste",
     "programacao": [
-      { "inicio": "00:00", "fim": "12:00", "titulo": "Barras coloridas — manhã" },
-      { "inicio": "12:00", "fim": "24:00", "titulo": "Barras coloridas — tarde e noite" }
+      {
+        "inicio": "00:00",
+        "fim": "12:00",
+        "titulo": "Barras coloridas — manhã"
+      },
+      {
+        "inicio": "12:00",
+        "fim": "24:00",
+        "titulo": "Barras coloridas — tarde e noite"
+      }
     ]
   },
   {
@@ -14,7 +22,24 @@
     "nome": "Meus Filmes",
     "grupo": "Pessoal",
     "tipo": "arquivo",
-    "origem": "midia/filme.mp4"
+    "origem": "midia/filme.mp4",
+    "legenda": "midia/filme.pt.srt"
+  },
+  {
+    "id": "serie-jp",
+    "nome": "Minha Série (legenda JP)",
+    "grupo": "Japonês",
+    "tipo": "pasta",
+    "origem": "midia/minha-serie",
+    "idiomaLegenda": "ja"
+  },
+  {
+    "id": "serie-pt",
+    "nome": "Minha Série (legenda PT)",
+    "grupo": "Pessoal",
+    "tipo": "pasta",
+    "origem": "midia/minha-serie",
+    "idiomaLegenda": "pt"
   },
   {
     "id": "camera",

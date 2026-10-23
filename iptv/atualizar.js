@@ -14,6 +14,8 @@ function lerConfig() {
     listas: [],
     excluirGrupos: [],
     excluirNaoVinteQuatroHoras: false,
+    excluirIpSolto: true,
+    excluirHosts: [],
     testarStreams: true,
     timeoutTesteMs: 8000,
     simultaneos: 20,
@@ -96,6 +98,16 @@ async function emParalelo(itens, limite, fn) {
   return resultados;
 }
 
+// Emissoras de verdade transmitem por CDN com domínio próprio; link num IP cru
+// (http://170.84.x.x/Globo_HD/...) quase sempre é sinal de TV paga capturado e
+// retransmitido sem autorização — além de cair o tempo todo.
+function fonteSuspeita(url, cfg) {
+  let host;
+  try { host = new URL(url).hostname; } catch { return true; }
+  if (cfg.excluirIpSolto && (/^\d{1,3}(\.\d{1,3}){3}$/.test(host) || host.startsWith('['))) return true;
+  return cfg.excluirHosts.some(h => host === h || host.endsWith(`.${h}`));
+}
+
 const slug = s => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
   .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 50) || 'canal';
 
@@ -118,15 +130,18 @@ async function atualizar() {
 
   const excluir = new Set(cfg.excluirGrupos.map(g => g.toLowerCase()));
   const vistos = new Set();
+  let suspeitas = 0;
   const candidatos = brutos.filter(c => {
     if (vistos.has(c.url)) return false; // a mesma URL aparece na lista do país e na do idioma
     vistos.add(c.url);
     const grupos = (c.attrs['group-title'] || '').split(';').map(g => g.toLowerCase());
     if (grupos.some(g => excluir.has(g))) return false;
     if (cfg.excluirNaoVinteQuatroHoras && /\[Not 24\/7\]/i.test(c.nome)) return false;
+    if (fonteSuspeita(c.url, cfg)) { suspeitas++; return false; }
     return true;
   });
 
+  if (suspeitas) console.log(`[atualizar] ${suspeitas} links de fonte suspeita ignorados (excluirIpSolto/excluirHosts)`);
   let noAr = candidatos;
   if (cfg.testarStreams) {
     console.log(`[atualizar] testando ${candidatos.length} streams (${cfg.simultaneos} por vez)…`);

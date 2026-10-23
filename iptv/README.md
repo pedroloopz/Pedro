@@ -50,12 +50,13 @@ nenhum vídeo seu.
 
 ## Adicionar canais
 
-Edite `channels.json`. Três tipos:
+Edite `channels.json`. Quatro tipos:
 
 | `tipo`    | `origem`                              | Exemplo de uso                     |
 |-----------|---------------------------------------|------------------------------------|
 | `teste`   | —                                     | barras coloridas + bipe            |
 | `arquivo` | caminho de um vídeo (ex.: `midia/x.mp4`) | seus filmes/vídeos em loop      |
+| `pasta`   | pasta com vídeos (ex.: `midia/serie`)   | série: episódios em ordem, em loop |
 | `url`     | link `http(s)`, `rtmp`, `rtsp`, `.m3u8` | câmera IP, live, outro stream    |
 
 Campos opcionais: `grupo`, `logo` (URL de imagem), `bitrate` (padrão
@@ -71,6 +72,31 @@ H.264/AAC; quase zero CPU) e `programacao` (repete todo dia no EPG):
 O `id` aceita só letras minúsculas, números, `-` e `_`. Reinicie o servidor
 após editar.
 
+### Legendas (filmes e séries)
+
+A legenda é gravada na imagem, então aparece em qualquer app ou TV.
+
+- Num `arquivo`: `"legenda": "midia/filme.pt.srt"`
+- Numa `pasta`: `"idiomaLegenda": "ja"` faz `Episódio 01.mkv` usar
+  `Episódio 01.ja.srt` (também aceita `.ass` e `.vtt`). Os episódios tocam em
+  ordem natural (ep2 antes de ep10), e um episódio novo colocado na pasta entra
+  na próxima volta.
+- **Mesma série, duas legendas:** crie dois canais apontando para a mesma pasta,
+  um com `"idiomaLegenda": "ja"` e outro com `"pt"` (já está assim no exemplo).
+- Legenda com acentos quebrados (`Ã§`)? Ela está em Windows-1252: adicione
+  `"codificacaoLegenda": "CP1252"`.
+- Legenda em japonês no Linux precisa de fonte japonesa:
+  `sudo apt install fonts-noto-cjk` (Windows e macOS já têm).
+
+```
+midia/minha-serie/
+├── Episódio 01.mkv
+├── Episódio 01.ja.srt
+├── Episódio 01.pt.srt
+├── Episódio 02.mkv
+└── ...
+```
+
 ## Canais públicos atualizados todo dia (iptv-org)
 
 Além dos seus canais, o servidor baixa sozinho as listas públicas do
@@ -83,10 +109,12 @@ cada 24 h, sem precisar fazer nada.
 
   | Campo | Padrão | O que faz |
   |---|---|---|
-  | `listas` | Brasil + idioma português | URLs `.m3u` a baixar (veja abaixo outras) |
+  | `listas` | Brasil + português + japonês | URLs `.m3u` a baixar (veja abaixo outras) |
   | `atualizarACadaHoras` | `24` | intervalo entre atualizações |
   | `excluirGrupos` | `[]` | ex.: `["Shop", "Religious"]` |
   | `excluirNaoVinteQuatroHoras` | `false` | remove canais marcados `[Not 24/7]` |
+  | `excluirIpSolto` | `true` | ignora links em IP cru (`http://170.84.x.x/...`): quase sempre são TV paga retransmitida sem autorização, e caem muito |
+  | `excluirHosts` | 4 domínios | outros domínios de retransmissão a ignorar |
   | `testarStreams` | `true` | testa cada link antes de incluir |
   | `timeoutTesteMs` / `simultaneos` | `8000` / `20` | rigor e velocidade do teste |
   | `epgExterno` | `[]` | URLs de guia XMLTV para os canais públicos (o iptv-org não hospeda guia pronto; há fornecedores na aba *Providers → EPG* do awesome-iptv) |

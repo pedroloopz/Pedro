@@ -54,14 +54,12 @@ fs.mkdirSync(HLS, { recursive: true });
 
 // ---------- ffmpeg ----------
 
+const VIDEO = /\.(mp4|mkv|avi|mov|webm|m4v|ts)$/i;
+
 function entrada(c) {
   if (c.tipo === 'teste') {
     return ['-re', '-f', 'lavfi', '-i', 'testsrc2=size=1280x720:rate=30',
             '-f', 'lavfi', '-i', 'sine=frequency=440:sample_rate=48000'];
-  }
-  if (c.tipo === 'arquivo') {
-    // -stream_loop -1 repete o arquivo para sempre; -re lê em tempo real (vira "ao vivo")
-    return ['-re', '-stream_loop', '-1', '-i', path.resolve(RAIZ, c.origem)];
   }
   if (c.tipo === 'url') {
     const rede = /^https?:/.test(c.origem)
@@ -71,32 +69,111 @@ function entrada(c) {
   throw new Error(`tipo desconhecido: ${c.tipo}`);
 }
 
-function codificacao(c) {
-  if (c.copiar) return ['-c', 'copy']; // fonte já em H.264/AAC: quase zero CPU
+function codificacao(c, comLegenda = false) {
+  // legenda embutida exige recodificar o vídeo, então ignora "copiar"
+  if (c.copiar && !comLegenda) return ['-c', 'copy']; // fonte já em H.264/AAC: quase zero CPU
   return ['-c:v', 'libx264', '-preset', 'veryfast', '-tune', 'zerolatency',
           '-b:v', c.bitrate || '2500k', '-maxrate', c.bitrate || '2500k', '-bufsize', '5000k',
           '-g', '60', '-sc_threshold', '0', '-pix_fmt', 'yuv420p',
           '-c:a', 'aac', '-b:a', '128k', '-ac', '2'];
 }
 
+function saidaHls(dir, continuar) {
+  // continuar: emenda no index.m3u8 que já existe (próximo episódio do mesmo canal)
+  const flags = 'delete_segments+omit_endlist+independent_segments' + (continuar ? '+append_list' : '');
+  return ['-f', 'hls', '-hls_time', '4', '-hls_list_size', '6', '-hls_flags', flags,
+          '-hls_segment_filename', path.join(dir, 'seg_%05d.ts'), path.join(dir, 'index.m3u8')];
+}
+
+function ffmpeg(c, args, cwd) {
+  const proc = spawn('ffmpeg', ['-hide_banner', '-loglevel', 'error', ...args], { cwd, stdio: ['ignore', 'ignore', 'pipe'] });
+  proc.stderr.on('data', d => process.stderr.write(`[${c.id}] ${d}`));
+  return proc;
+}
+
+// Vídeos de um canal "arquivo" (1 vídeo) ou "pasta" (episódios em ordem), cada um
+// com sua legenda: ep01.mkv usa ep01.<idiomaLegenda>.srt, ou ep01.srt
+function arquivosDo(c) {
+  const legendaDe = video => {
+    const base = video.replace(/\.[^.]+$/, '');
+    const sufixos = c.idiomaLegenda ? [`.${c.idiomaLegenda}`] : [''];
+    for (const suf of sufixos) for (const ext of ['.srt', '.ass', '.vtt']) {
+      if (fs.existsSync(base + suf + ext)) return base + suf + ext;
+    }
+    return null;
+  };
+  if (c.tipo === 'arquivo') {
+    const video = path.resolve(RAIZ, c.origem);
+    let legenda = c.legenda ? path.resolve(RAIZ, c.legenda) : c.idiomaLegenda ? legendaDe(video) : null;
+    if (legenda && !fs.existsSync(legenda)) {
+      console.warn(`[${c.id}] legenda não encontrada: ${c.legenda}; tocando sem`);
+      legenda = null;
+    }
+    return [{ video, legenda }];
+  }
+  const dir = path.resolve(RAIZ, c.origem);
+  return fs.readdirSync(dir).filter(f => VIDEO.test(f))
+    .sort((a, b) => a.localeCompare(b, 'pt-BR', { numeric: true })) // ep2 antes de ep10
+    .map(f => ({ video: path.join(dir, f), legenda: legendaDe(path.join(dir, f)) }));
+}
+
+// Toca os vídeos um após o outro, para sempre. Cada um roda num ffmpeg próprio para
+// a legenda começar do zero junto com o vídeo (com -stream_loop ela sumiria na 2ª volta).
+function iniciarSequencia(c, dir, r) {
+  let i = 0, primeiro = true, falhasSeguidas = 0;
+  const proximo = () => {
+    if (r.parado) return;
+    let lista;
+    try { lista = arquivosDo(c); } catch (e) { lista = []; console.error(`[${c.id}] ${e.message}`); }
+    if (!lista.length || falhasSeguidas >= lista.length) {
+      console.error(`[${c.id}] nenhum vídeo tocável em ${c.origem}`);
+      return rodando.delete(c.id);
+    }
+    const { video, legenda } = lista[i++ % lista.length];
+    const filtro = [];
+    if (legenda) {
+      // copia com nome fixo: evita escapar acentos, espaços e ":" do caminho dentro do filtro
+      const nome = `legenda${path.extname(legenda)}`;
+      fs.copyFileSync(legenda, path.join(dir, nome));
+      filtro.push('-vf', `subtitles=${nome}${c.codificacaoLegenda ? `:charenc=${c.codificacaoLegenda}` : ''}`);
+    }
+    console.log(`[${c.id}] tocando ${path.basename(video)}${legenda ? ` + ${path.basename(legenda)}` : ''}`);
+    const proc = ffmpeg(c, ['-re', '-i', video, '-map', '0:v:0', '-map', '0:a:0?', ...filtro,
+      ...codificacao(c, !!legenda), ...saidaHls(dir, !primeiro)], dir);
+    r.proc = proc;
+    proc.on('exit', code => {
+      if (r.parado) return;
+      if (code === 0) { primeiro = false; falhasSeguidas = 0; return proximo(); }
+      falhasSeguidas++;
+      setTimeout(proximo, 1000);
+    });
+  };
+  proximo();
+}
+
 function iniciar(c) {
   const dir = path.join(HLS, c.id);
   fs.rmSync(dir, { recursive: true, force: true });
   fs.mkdirSync(dir, { recursive: true });
-  const args = ['-hide_banner', '-loglevel', 'error', ...entrada(c),
-    '-map', '0:v:0', '-map', c.tipo === 'teste' ? '1:a:0' : '0:a:0?', ...codificacao(c),
-    '-f', 'hls', '-hls_time', '4', '-hls_list_size', '6',
-    '-hls_flags', 'delete_segments+omit_endlist+independent_segments',
-    '-hls_segment_filename', path.join(dir, 'seg_%05d.ts'),
-    path.join(dir, 'index.m3u8')];
-  const proc = spawn('ffmpeg', args, { stdio: ['ignore', 'ignore', 'pipe'] });
-  proc.stderr.on('data', d => process.stderr.write(`[${c.id}] ${d}`));
-  proc.on('exit', code => {
-    if (rodando.get(c.id)?.proc === proc) rodando.delete(c.id);
+  const r = { proc: null, ultimoAcesso: Date.now(), parado: false, emendas: new Set() };
+  rodando.set(c.id, r);
+  console.log(`[${c.id}] canal ligado`);
+  if (c.tipo === 'arquivo' || c.tipo === 'pasta') return iniciarSequencia(c, dir, r);
+
+  r.proc = ffmpeg(c, [...entrada(c), '-map', '0:v:0', '-map', c.tipo === 'teste' ? '1:a:0' : '0:a:0?',
+    ...codificacao(c), ...saidaHls(dir, false)]);
+  r.proc.on('exit', code => {
+    if (rodando.get(c.id) === r) rodando.delete(c.id);
     console.log(`[${c.id}] ffmpeg encerrado (código ${code})`);
   });
-  rodando.set(c.id, { proc, ultimoAcesso: Date.now() });
-  console.log(`[${c.id}] ffmpeg iniciado`);
+}
+
+function parar(id) {
+  const r = rodando.get(id);
+  if (!r) return;
+  r.parado = true;
+  r.proc?.kill('SIGTERM');
+  rodando.delete(id);
 }
 
 function garantirRodando(c) {
@@ -109,11 +186,42 @@ setInterval(() => {
   for (const [id, r] of rodando) {
     if (Date.now() - r.ultimoAcesso > OCIOSO_MS) {
       console.log(`[${id}] sem espectadores, parando`);
-      r.proc.kill('SIGTERM');
-      rodando.delete(id);
+      parar(id);
+    } else {
+      limparOrfaos(id);
     }
   }
 }, 10_000);
+
+// Ao emendar episódios, o ffmpeg esquece de apagar alguns segmentos do episódio
+// anterior; sem isso a pasta hls/ cresce sem parar
+function limparOrfaos(id) {
+  const dir = path.join(HLS, id);
+  let lista;
+  try { lista = fs.readFileSync(path.join(dir, 'index.m3u8'), 'utf8'); } catch { return; }
+  for (const f of fs.readdirSync(dir)) {
+    if (!/^seg_\d+\.ts$/.test(f) || lista.includes(f)) continue;
+    const caminho = path.join(dir, f);
+    try {
+      if (Date.now() - fs.statSync(caminho).mtimeMs > 60_000) fs.rmSync(caminho);
+    } catch {}
+  }
+}
+
+// O ffmpeg não escreve EXT-X-DISCONTINUITY-SEQUENCE; sem ela o player se perde
+// quando uma emenda entre episódios sai da janela. Conta as emendas já vistas.
+function comSequenciaDeEmendas(m3u8, r) {
+  const linhas = m3u8.split('\n');
+  const inicio = Number((m3u8.match(/#EXT-X-MEDIA-SEQUENCE:(\d+)/) || [])[1] || 0);
+  let n = inicio, emenda = false;
+  for (const l of linhas) {
+    if (l.startsWith('#EXT-X-DISCONTINUITY')) emenda = true;
+    else if (l && !l.startsWith('#')) { if (emenda) r.emendas.add(n); emenda = false; n++; }
+  }
+  const anteriores = [...r.emendas].filter(x => x < inicio).length;
+  return linhas.map(l => l.startsWith('#EXT-X-MEDIA-SEQUENCE')
+    ? `${l}\n#EXT-X-DISCONTINUITY-SEQUENCE:${anteriores}` : l).join('\n');
+}
 
 async function esperarArquivo(id, arquivo, ms = 20_000) {
   const fim = Date.now() + ms;
@@ -200,6 +308,8 @@ async function rotaHls(req, res, id, arquivo) {
   if (arquivo === 'index.m3u8') {
     if (!(await esperarArquivo(id, caminho))) return enviar(res, 503, 'canal iniciando, tente de novo');
     let m3u8 = fs.readFileSync(caminho, 'utf8');
+    const r = rodando.get(id);
+    if (r?.emendas) m3u8 = comSequenciaDeEmendas(m3u8, r);
     // segmentos são relativos e perderiam o ?token=; reescreve cada linha de mídia
     if (TOKEN) m3u8 = m3u8.split('\n').map(l => (l && !l.startsWith('#') ? comToken(l) : l)).join('\n');
     return enviar(res, 200, m3u8, TIPOS['.m3u8'], { 'Cache-Control': 'no-cache' });
@@ -277,5 +387,5 @@ http.createServer(async (req, res) => {
 });
 
 for (const sinal of ['SIGINT', 'SIGTERM']) {
-  process.on(sinal, () => { for (const r of rodando.values()) r.proc.kill('SIGTERM'); process.exit(0); });
+  process.on(sinal, () => { for (const id of [...rodando.keys()]) parar(id); process.exit(0); });
 }
