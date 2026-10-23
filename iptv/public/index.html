@@ -6,108 +6,342 @@
 <title>Minha TV</title>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js"></script>
 <style>
-  :root { --fundo: #0f1115; --painel: #181b22; --texto: #e8e8ea; --suave: #8a8f9c; --destaque: #4f8cff; }
+  :root { --fundo: #0f1115; --painel: #181b22; --texto: #e8e8ea; --suave: #8a8f9c; --destaque: #4f8cff; --borda: #ffffff1a; }
   * { box-sizing: border-box; }
   body { margin: 0; font-family: system-ui, sans-serif; background: var(--fundo); color: var(--texto);
-         display: grid; grid-template-columns: 280px 1fr; height: 100vh; }
-  aside { background: var(--painel); overflow-y: auto; padding: 16px; }
-  h1 { font-size: 18px; margin: 0 0 12px; }
-  #busca { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid #ffffff20;
+         display: grid; grid-template-columns: 320px 1fr; height: 100vh; }
+  aside { background: var(--painel); display: flex; flex-direction: column; min-height: 0; }
+  header { padding: 16px 16px 8px; }
+  h1 { font-size: 18px; margin: 0 0 12px; display: flex; align-items: center; gap: 8px; }
+  h1 a { margin-left: auto; font-size: 13px; color: var(--suave); text-decoration: none; font-weight: normal; }
+  nav { display: flex; gap: 4px; margin-bottom: 10px; }
+  nav button { flex: 1; justify-content: center; padding: 8px; background: #ffffff0d; }
+  nav button.ativo { background: var(--destaque); }
+  #busca, select, input { width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--borda);
            background: var(--fundo); color: inherit; font: inherit; }
-  #atualizado { font-size: 12px; color: var(--suave); margin: 8px 0 0; }
-  button img { width: 28px; height: 20px; object-fit: contain; flex: none; }
+  #info { font-size: 12px; color: var(--suave); margin: 8px 0 0; }
+  #lista { overflow-y: auto; padding: 0 16px 16px; flex: 1; }
   h2 { font-size: 12px; text-transform: uppercase; color: var(--suave); margin: 16px 0 6px; letter-spacing: .05em; }
-  button { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; padding: 10px 12px;
+  button { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; padding: 9px 10px;
            border: 0; border-radius: 8px; background: transparent; color: inherit; font: inherit; cursor: pointer; }
   button:hover { background: #ffffff10; }
   button.ativo { background: var(--destaque); }
-  .ao-vivo { width: 8px; height: 8px; border-radius: 50%; background: #e5484d; margin-left: auto; }
-  main { display: flex; flex-direction: column; padding: 16px; gap: 8px; min-width: 0; }
+  .num { color: var(--suave); font-size: 12px; min-width: 26px; text-align: right; }
+  button.ativo .num { color: inherit; }
+  button img { width: 32px; height: 22px; object-fit: contain; flex: none; }
+  .fora { opacity: .45; }
+  .marca { margin-left: auto; font-size: 12px; color: var(--suave); white-space: nowrap; }
+  main { display: flex; flex-direction: column; padding: 16px; gap: 10px; min-width: 0; min-height: 0; }
   video { width: 100%; flex: 1; min-height: 0; background: #000; border-radius: 8px; }
-  #status { color: var(--suave); font-size: 14px; }
-  #m3u { font-size: 13px; color: var(--suave); }
+  #controles { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  #controles label { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--suave); }
+  #controles select { width: auto; padding: 6px 8px; }
+  #status { color: var(--suave); font-size: 14px; flex: 1; min-width: 200px; }
+  #m3u { font-size: 12px; color: var(--suave); word-break: break-all; }
   #m3u code { color: var(--texto); }
-  @media (max-width: 700px) {
+  .capa { display: grid; grid-template-columns: 44px 1fr; gap: 10px; align-items: center; }
+  .capa img { width: 44px; height: 64px; object-fit: cover; border-radius: 4px; background: #ffffff10; }
+  .capa small { color: var(--suave); display: block; }
+  #login { position: fixed; inset: 0; background: var(--fundo); display: none; place-items: center; z-index: 10; padding: 16px; }
+  #login form { width: min(360px, 100%); display: grid; gap: 10px; }
+  #login button { justify-content: center; background: var(--destaque); }
+  @media (max-width: 760px) {
     body { grid-template-columns: 1fr; grid-template-rows: auto 1fr; height: auto; }
-    main { order: -1; } video { flex: none; aspect-ratio: 16/9; }
+    main { order: -1; } video { flex: none; aspect-ratio: 16/9; } #lista { max-height: none; }
   }
 </style>
 </head>
 <body>
+<div id="login">
+  <form>
+    <h1>📺 Minha TV</h1>
+    <input id="senha" type="password" placeholder="Senha" autocomplete="current-password" required>
+    <button>Entrar</button>
+    <small id="erro-login" style="color:#e5484d"></small>
+  </form>
+</div>
 <aside>
-  <h1>📺 Minha TV</h1>
-  <input id="busca" type="search" placeholder="Buscar canal…" autocomplete="off">
-  <p id="atualizado"></p>
+  <header>
+    <h1>📺 Minha TV <a id="link-admin" href="/admin" hidden>painel ⚙</a></h1>
+    <nav>
+      <button data-aba="tv" class="ativo">TV</button>
+      <button data-aba="filmes">Filmes</button>
+      <button data-aba="series">Séries</button>
+    </nav>
+    <input id="busca" type="search" placeholder="Buscar…" autocomplete="off">
+    <p id="info"></p>
+  </header>
   <div id="lista"></div>
 </aside>
 <main>
-  <video id="video" controls autoplay playsinline></video>
-  <div id="status">Escolha um canal.</div>
+  <video id="video" controls autoplay playsinline crossorigin="anonymous"></video>
+  <div id="controles">
+    <div id="status">Escolha um canal. (↑/↓ trocam de canal)</div>
+    <label>Legenda <select id="sel-legenda"><option value="-1">nenhuma</option></select></label>
+    <label>Qualidade <select id="sel-qualidade"><option value="-1">automática</option></select></label>
+  </div>
   <div id="m3u">Playlist para outros apps: <code id="link-m3u"></code></div>
 </main>
 <script>
-const token = new URLSearchParams(location.search).get('token');
-const comToken = u => token ? `${u}${u.includes('?') ? '&' : '?'}token=${encodeURIComponent(token)}` : u;
-const video = document.getElementById('video');
-const status = document.getElementById('status');
-let hls;
+const $ = s => document.querySelector(s);
+const video = $('#video'), status = $('#status'), selLeg = $('#sel-legenda'), selQual = $('#sel-qualidade');
+const guardar = (k, v) => { try { v === null ? localStorage.removeItem(k) : localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+const lembrar = (k, padrao) => { try { const v = localStorage.getItem(k); return v === null ? padrao : JSON.parse(v); } catch { return padrao; } };
 
-document.getElementById('link-m3u').textContent = comToken(`${location.origin}/playlist.m3u`);
+const daUrl = new URLSearchParams(location.search).get('token');
+if (daUrl) { guardar('token', daUrl); history.replaceState(null, '', location.pathname); }
+let token = lembrar('token', '');
+const comToken = u => token && !u.includes('token=') ? `${u}${u.includes('?') ? '&' : '?'}token=${encodeURIComponent(token)}` : u;
+const semAcento = s => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
-function tocar(canal, botao) {
-  document.querySelectorAll('button.ativo').forEach(b => b.classList.remove('ativo'));
-  botao.classList.add('ativo');
-  status.textContent = `Sintonizando ${canal.nome}… (o primeiro acesso leva alguns segundos)`;
-  const src = canal.src;
-  if (hls) hls.destroy();
+let aba = 'tv', canais = [], bib = { filmes: [], series: [] }, hls = null, atual = null, serieAberta = null;
+
+async function api(caminho) {
+  const r = await fetch(comToken(caminho));
+  if (r.status === 401) { pedirSenha(); throw new Error('senha'); }
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+function pedirSenha(msg = '') {
+  $('#login').style.display = 'grid';
+  $('#erro-login').textContent = msg;
+  $('#senha').focus();
+}
+$('#login form').onsubmit = async e => {
+  e.preventDefault();
+  token = $('#senha').value;
+  guardar('token', token);
+  try { await carregar(); $('#login').style.display = 'none'; }
+  catch { pedirSenha('Senha incorreta.'); }
+};
+
+// ---------- reprodução ----------
+
+function limparPlayer() {
+  if (hls) { hls.destroy(); hls = null; }
+  video.removeAttribute('src');
+  video.querySelectorAll('track').forEach(t => t.remove());
+  selLeg.replaceChildren(new Option('nenhuma', -1));
+  selQual.replaceChildren(new Option('automática', -1));
+}
+
+function tocarAoVivo(c) {
+  limparPlayer();
+  atual = { tipo: 'tv', id: c.id };
+  guardar('ultimoCanal', c.id);
+  status.textContent = `Sintonizando ${c.numero} · ${c.nome}…`;
   if (window.Hls && Hls.isSupported()) {
-    hls = new Hls({ manifestLoadingMaxRetry: 6, manifestLoadingRetryDelay: 2000 });
-    hls.loadSource(src);
+    hls = new Hls({ manifestLoadingMaxRetry: 6, manifestLoadingRetryDelay: 2000, subtitleDisplay: true });
+    hls.loadSource(c.src);
     hls.attachMedia(video);
-    hls.on(Hls.Events.MANIFEST_PARSED, () => { status.textContent = `▶ ${canal.nome}`; video.play().catch(() => {}); });
+    hls.on(Hls.Events.MANIFEST_PARSED, () => {
+      status.textContent = `▶ ${c.numero} · ${c.nome}`;
+      hls.levels.forEach((l, i) => selQual.append(new Option(l.name || (l.height ? `${l.height}p` : `nível ${i + 1}`), i)));
+      video.play().catch(() => {});
+    });
+    hls.on(Hls.Events.SUBTITLE_TRACKS_UPDATED, () => {
+      selLeg.replaceChildren(new Option('nenhuma', -1));
+      hls.subtitleTracks.forEach((t, i) => selLeg.append(new Option(t.name || t.lang, i)));
+      // a escolha salva vale para todos os canais; sem escolha, a faixa padrão do canal
+      const pref = lembrar('legenda', null);
+      let idx = hls.subtitleTracks.findIndex(t => t.default);
+      if (pref === 'nenhuma') idx = -1;
+      else if (pref && hls.subtitleTracks.some(t => t.lang === pref)) idx = hls.subtitleTracks.findIndex(t => t.lang === pref);
+      hls.subtitleTrack = idx;
+      selLeg.value = idx;
+    });
+    hls.on(Hls.Events.SUBTITLE_TRACK_SWITCH, (_, d) => { selLeg.value = d.id; });
     hls.on(Hls.Events.ERROR, (_, d) => { if (d.fatal) status.textContent = `Erro no canal: ${d.details}`; });
   } else {
-    video.src = src; // Safari/iOS tocam HLS nativamente
+    video.src = c.src; // Safari/iOS tocam HLS nativamente (legendas no menu do próprio player)
     video.play().catch(() => {});
-    status.textContent = `▶ ${canal.nome}`;
+    status.textContent = `▶ ${c.numero} · ${c.nome}`;
   }
 }
 
-const semAcento = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-let todos = [];
-
-function desenhar(filtro = '') {
-  const lista = document.getElementById('lista');
-  lista.replaceChildren();
-  const grupos = {};
-  for (const c of todos) {
-    if (filtro && !semAcento(`${c.nome} ${c.grupo}`).includes(semAcento(filtro))) continue;
-    // seus canais primeiro, depois os públicos do iptv-org
-    (grupos[c.externo ? c.grupo || 'Outros' : `★ ${c.grupo || 'Meus canais'}`] ||= []).push(c);
+selLeg.onchange = () => {
+  const i = Number(selLeg.value);
+  if (hls) {
+    hls.subtitleTrack = i;
+    guardar('legenda', i < 0 ? 'nenhuma' : hls.subtitleTracks[i].lang);
+  } else {
+    [...video.textTracks].forEach((t, j) => { t.mode = j === i ? 'showing' : 'disabled'; });
+    guardar('legenda', i < 0 ? 'nenhuma' : video.textTracks[i]?.language);
   }
-  const nomes = Object.keys(grupos).sort((a, b) => (b[0] === '★') - (a[0] === '★') || a.localeCompare(b));
-  for (const grupo of nomes) {
-    const h = document.createElement('h2'); h.textContent = `${grupo} (${grupos[grupo].length})`; lista.append(h);
-    for (const c of grupos[grupo]) {
-      const b = document.createElement('button');
-      if (c.logo) { const img = document.createElement('img'); img.src = c.logo; img.loading = 'lazy'; img.alt = ''; img.onerror = () => img.remove(); b.append(img); }
-      b.append(c.nome);
-      if (c.aoVivo) { const p = document.createElement('span'); p.className = 'ao-vivo'; p.title = 'no ar'; b.append(p); }
-      b.onclick = () => tocar(c, b);
+};
+selQual.onchange = () => { if (hls) hls.currentLevel = Number(selQual.value); };
+
+async function tocarArquivo(x, titulo) {
+  limparPlayer();
+  atual = { tipo: 'vod', id: x.id };
+  status.textContent = `▶ ${titulo}`;
+  video.src = x.src;
+  try {
+    const legs = await api(x.legendas);
+    const pref = lembrar('legenda', null);
+    legs.forEach((l, i) => {
+      const t = document.createElement('track');
+      Object.assign(t, { kind: 'subtitles', srclang: l.idioma, label: l.nome, src: l.url });
+      video.append(t);
+      selLeg.append(new Option(l.nome, i));
+    });
+    // mostra a legenda preferida (ou a primeira) quando as faixas carregarem
+    setTimeout(() => {
+      const idx = pref === 'nenhuma' ? -1 : Math.max(0, legs.findIndex(l => l.idioma === pref));
+      [...video.textTracks].forEach((t, j) => { t.mode = j === idx ? 'showing' : 'disabled'; });
+      selLeg.value = legs.length ? idx : -1;
+    }, 300);
+  } catch {}
+  const pos = lembrar(`pos:${x.id}`, 0);
+  video.addEventListener('loadedmetadata', () => { if (pos > 5 && pos < video.duration - 30) video.currentTime = pos; }, { once: true });
+  video.play().catch(() => {});
+  if (/\.(mkv|avi)$/i.test(x.ext ? `.${x.ext}` : '')) status.textContent += ' (se não tocar no navegador, abra pelo VLC ou app de TV)';
+}
+
+// "continuar de onde parou" dos filmes e episódios
+setInterval(() => {
+  if (atual?.tipo === 'vod' && !video.paused && video.duration) {
+    guardar(`pos:${atual.id}`, video.currentTime > video.duration - 30 ? null : video.currentTime);
+    if (video.currentTime > video.duration * 0.9) guardar(`visto:${atual.id}`, true);
+  }
+}, 5000);
+
+// ---------- listas ----------
+
+function botao(conteudo, ao, ativo = false) {
+  const b = document.createElement('button');
+  b.append(...conteudo);
+  b.onclick = ao;
+  if (ativo) b.classList.add('ativo');
+  return b;
+}
+const texto = (tag, t, cls) => Object.assign(document.createElement(tag), { textContent: t, className: cls || '' });
+function imagem(src, cls = '') {
+  const img = Object.assign(document.createElement('img'), { src: src || '', loading: 'lazy', alt: '', className: cls });
+  img.onerror = () => { img.style.visibility = 'hidden'; };
+  return img;
+}
+
+function desenharTv(filtro) {
+  const lista = $('#lista');
+  const grupos = new Map();
+  for (const c of canais) {
+    if (filtro && !semAcento(`${c.numero} ${c.nome} ${c.grupo}`).includes(semAcento(filtro))) continue;
+    if (!grupos.has(c.grupo)) grupos.set(c.grupo, []);
+    grupos.get(c.grupo).push(c);
+  }
+  for (const [g, itens] of grupos) {
+    lista.append(texto('h2', `${g} (${itens.length})`));
+    for (const c of itens) {
+      const b = botao([texto('span', c.numero, 'num'), imagem(c.logo), c.nome, texto('span', c.noAr ? (c.ligado ? '● ao vivo' : '') : 'fora do ar', 'marca')],
+        () => { marcar(b); tocarAoVivo(c); }, atual?.id === c.id);
+      if (!c.noAr) b.classList.add('fora');
+      b.dataset.id = c.id;
       lista.append(b);
     }
   }
 }
 
-document.getElementById('busca').oninput = e => desenhar(e.target.value);
+function itemCapa(x, linha2) {
+  const d = document.createElement('div');
+  d.className = 'capa';
+  const t = document.createElement('div');
+  t.append(x.titulo + (x.ano ? ` (${x.ano})` : ''), texto('small', linha2 || ''));
+  d.append(imagem(x.capa), t);
+  return d;
+}
 
-fetch(comToken('/api/canais')).then(r => r.json()).then(dados => {
-  todos = dados.canais;
-  document.getElementById('atualizado').textContent = dados.atualizadoEm
-    ? `${todos.length} canais · lista pública atualizada em ${new Date(dados.atualizadoEm).toLocaleString('pt-BR')}`
-    : `${todos.length} canais · baixando lista pública (recarregue em alguns minutos)`;
+function desenharFilmes(filtro) {
+  const lista = $('#lista');
+  const porCat = new Map();
+  for (const f of bib.filmes) {
+    if (filtro && !semAcento(`${f.titulo} ${f.categoria}`).includes(semAcento(filtro))) continue;
+    if (!porCat.has(f.categoria)) porCat.set(f.categoria, []);
+    porCat.get(f.categoria).push(f);
+  }
+  if (!bib.filmes.length) lista.append(texto('p', 'Coloque filmes em biblioteca/filmes/ (veja o README).', 'marca'));
+  for (const [cat, itens] of porCat) {
+    lista.append(texto('h2', cat));
+    for (const f of itens) {
+      const pos = lembrar(`pos:${f.id}`, 0);
+      const extra = lembrar(`visto:${f.id}`, false) ? '✓ visto' : pos ? `continuar de ${Math.floor(pos / 60)} min` : (f.nota ? `★ ${f.nota.toFixed(1)}` : '');
+      lista.append(botao([itemCapa(f, extra)], e => { marcar(e.currentTarget); tocarArquivo(f, f.titulo); }, atual?.id === f.id));
+    }
+  }
+}
+
+function desenharSeries(filtro) {
+  const lista = $('#lista');
+  if (serieAberta) {
+    const s = bib.series.find(x => x.id === serieAberta);
+    lista.append(botao(['← todas as séries'], () => { serieAberta = null; desenhar(); }));
+    lista.append(itemCapa(s, s.sinopse ? s.sinopse.slice(0, 140) + '…' : ''));
+    let temp = null;
+    for (const e of s.episodios) {
+      if (filtro && !semAcento(e.titulo).includes(semAcento(filtro))) continue;
+      if (e.temporada !== temp) { temp = e.temporada; lista.append(texto('h2', `Temporada ${temp}`)); }
+      const pos = lembrar(`pos:${e.id}`, 0);
+      const marca = lembrar(`visto:${e.id}`, false) ? '✓' : pos ? `${Math.floor(pos / 60)} min` : '';
+      lista.append(botao([texto('span', e.episodio, 'num'), e.titulo, texto('span', marca, 'marca')],
+        ev => { marcar(ev.currentTarget); tocarArquivo(e, `${s.titulo} · T${e.temporada}E${e.episodio}`); }, atual?.id === e.id));
+    }
+    return;
+  }
+  if (!bib.series.length) lista.append(texto('p', 'Coloque séries em biblioteca/series/<Nome da série>/ (veja o README).', 'marca'));
+  for (const s of bib.series) {
+    if (filtro && !semAcento(s.titulo).includes(semAcento(filtro))) continue;
+    const vistos = s.episodios.filter(e => lembrar(`visto:${e.id}`, false)).length;
+    lista.append(botao([itemCapa(s, `${s.episodios.length} episódios${vistos ? ` · ${vistos} vistos` : ''}`)],
+      () => { serieAberta = s.id; desenhar(); }));
+  }
+}
+
+function marcar(b) {
+  document.querySelectorAll('#lista button.ativo').forEach(x => x.classList.remove('ativo'));
+  b.classList.add('ativo');
+}
+
+function desenhar() {
+  const lista = $('#lista');
+  const rolagem = lista.scrollTop;
+  lista.replaceChildren();
+  ({ tv: desenharTv, filmes: desenharFilmes, series: desenharSeries })[aba]($('#busca').value);
+  lista.scrollTop = rolagem;
+}
+
+document.querySelectorAll('nav button').forEach(b => b.onclick = () => {
+  aba = b.dataset.aba;
+  document.querySelectorAll('nav button').forEach(x => x.classList.toggle('ativo', x === b));
+  $('#busca').value = '';
+  $('#lista').scrollTop = 0;
   desenhar();
-}).catch(() => { status.textContent = 'Não consegui carregar os canais. O servidor está rodando?'; });
+});
+$('#busca').oninput = desenhar;
+
+// ↑/↓ trocam de canal, como no controle remoto
+document.addEventListener('keydown', e => {
+  if (aba !== 'tv' || atual?.tipo !== 'tv' || e.target.tagName === 'INPUT' || !['ArrowUp', 'ArrowDown'].includes(e.key)) return;
+  e.preventDefault();
+  const visiveis = canais.filter(c => c.noAr);
+  const i = visiveis.findIndex(c => c.id === atual.id);
+  const prox = visiveis[(i + (e.key === 'ArrowDown' ? 1 : -1) + visiveis.length) % visiveis.length];
+  if (prox) { tocarAoVivo(prox); desenhar(); }
+});
+
+async function carregar() {
+  const dados = await api('/api/canais');
+  canais = dados.canais;
+  $('#link-admin').hidden = !dados.admin;
+  $('#info').textContent = `${canais.length} canais` + (dados.atualizadoEm
+    ? ` · lista pública de ${new Date(dados.atualizadoEm).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}` : '');
+  $('#link-m3u').textContent = comToken(`${location.origin}/playlist.m3u`);
+  bib = await api('/api/biblioteca').catch(() => bib);
+  desenhar();
+}
+
+carregar().catch(e => { if (e.message !== 'senha') status.textContent = 'Não consegui falar com o servidor.'; });
+setInterval(() => api('/api/canais').then(d => { canais = d.canais; if (aba === 'tv') desenhar(); }).catch(() => {}), 60_000);
 </script>
 </body>
 </html>

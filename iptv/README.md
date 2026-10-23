@@ -1,39 +1,26 @@
 # IPTV caseiro
 
-Servidor IPTV feito do zero: transforma vídeos seus, links de transmissão e
-sinais de teste em **canais ao vivo** (HLS), com playlist `.m3u`, guia de
-programação (EPG/XMLTV) e um player web. Zero dependências npm.
+Servidor IPTV feito do zero, sem dependências (só **Node 20+** e **ffmpeg**):
 
-> Use só conteúdo que você tem direito de transmitir (seus vídeos, domínio
-> público, streams abertos/licenciados). Retransmitir canais pagos é pirataria
-> (Lei 9.610/98).
+- 📺 **Seus vídeos viram canais ao vivo** que seguem o relógio, como TV de verdade, com guia de programação automático.
+- 💬 **Legendas selecionáveis** (japonês, português…) no mesmo canal: liga, desliga e troca no player.
+- 📶 **Várias qualidades** (1080p/720p/480p/360p) com troca automática conforme a internet, e **codificação pela placa de vídeo**.
+- 🌐 **Canais públicos** do [iptv-org](https://github.com/iptv-org/iptv) e do [Free-TV](https://github.com/Free-TV/IPTV), atualizados a cada 6 h, retestados a cada 15 min e com **troca automática para o link reserva**.
+- 🎬 **Filmes e séries sob demanda**, com capa e sinopse (TMDB) e "continuar de onde parou".
+- 📱 **API Xtream Codes**: TiviMate, IPTV Smarters e XCIPTV entram só com servidor + usuário + senha.
+- ⚙️ **Painel web** para favoritos, numeração, canais ocultos, usuários e ajustes, aplicados sem reiniciar.
+- 🔒 **Um usuário por pessoa/aparelho**, limite de tentativas, HTTPS opcional.
+- 🐳 **Docker**, verificação de saúde e testes automáticos no GitHub Actions.
 
-## Como funciona
+> Retransmitir canais pagos sem autorização é ilegal no Brasil (Lei 9.610/98). As listas
+> públicas trazem links de todo tipo; os filtros de `fontes.json` (`excluirIpSolto`,
+> `excluirHosts`) ajudam a ficar só com fontes oficiais.
 
-```
-channels.json ─► server.js ─► ffmpeg (1 por canal, sob demanda) ─► hls/<canal>/index.m3u8 + seg_*.ts
-                    │
-                    ├─ /                → player web (public/index.html)
-                    ├─ /playlist.m3u    → lista para VLC, TiviMate, IPTV Smarters, Kodi
-                    ├─ /epg.xml         → guia de programação (XMLTV)
-                    ├─ /api/canais      → JSON com os canais
-                    ├─ /hls/<id>/...    → o vídeo em si
-                    └─ /proxy/<id>      → canais públicos no player web
-
-fontes.json ─► atualizar.js (todo dia) ─► testa os streams ─► externos.json
-```
-
-- O ffmpeg de um canal só liga quando alguém abre o canal e desliga após
-  60 s sem ninguém assistindo (economiza CPU).
-- Arquivos tocam em loop infinito, em tempo real — parece TV de verdade.
-
-## Rodar
-
-Pré-requisitos: **Node 18+** e **ffmpeg**.
+## Começar
 
 ```bash
 # Ubuntu/Debian
-sudo apt install ffmpeg nodejs
+sudo apt install ffmpeg nodejs fonts-noto-cjk
 # macOS
 brew install ffmpeg node
 # Windows
@@ -45,121 +32,270 @@ cd iptv
 node server.js
 ```
 
-Abra `http://localhost:8080` e clique em **Canal Teste** — funciona sem
-nenhum vídeo seu.
+- TV no navegador: `http://localhost:8080`
+- Painel: `http://localhost:8080/admin`
+- Na primeira vez, o servidor baixa as listas públicas sozinho (leva alguns minutos testando os links).
 
-## Adicionar canais
+Sem `usuarios.json` o acesso é **livre**, inclusive o painel. Crie um usuário administrador
+logo no painel (**Usuários → + Novo usuário → Salvar**) ou copie `usuarios.exemplo.json`
+para `usuarios.json` e troque as senhas.
 
-Edite `channels.json`. Quatro tipos:
+## Como funciona
 
-| `tipo`    | `origem`                              | Exemplo de uso                     |
-|-----------|---------------------------------------|------------------------------------|
-| `teste`   | —                                     | barras coloridas + bipe            |
-| `arquivo` | caminho de um vídeo (ex.: `midia/x.mp4`) | seus filmes/vídeos em loop      |
-| `pasta`   | pasta com vídeos (ex.: `midia/serie`)   | série: episódios em ordem, em loop |
-| `url`     | link `http(s)`, `rtmp`, `rtsp`, `.m3u8` | câmera IP, live, outro stream    |
-
-Campos opcionais: `grupo`, `logo` (URL de imagem), `bitrate` (padrão
-`2500k`), `copiar: true` (não recodifica — use quando a fonte já é
-H.264/AAC; quase zero CPU) e `programacao` (repete todo dia no EPG):
-
-```json
-"programacao": [
-  { "inicio": "20:00", "fim": "22:00", "titulo": "Sessão da noite", "descricao": "Filme" }
-]
+```
+channels.json ──► transmissão sob demanda ──► ffmpeg (1 processo por vídeo da programação)
+                    │  o servidor monta as playlists HLS: qualidades, legendas WebVTT, emendas
+                    ▼
+fontes.json ──► atualizar (6 h) ──► dados/externos.json ──► verificação (15 min) + troca de link
+biblioteca/ ──► filmes e séries ──► /vod, API Xtream, player web
+                    │
+                    ├─ /                → player web (TV, Filmes, Séries)
+                    ├─ /admin           → painel
+                    ├─ /playlist.m3u    → playlist para VLC, TiviMate, Kodi…
+                    ├─ /epg.xml         → guia de programação (XMLTV)
+                    ├─ /player_api.php  → API Xtream Codes
+                    └─ /saude           → verificação de saúde (sem senha)
 ```
 
-O `id` aceita só letras minúsculas, números, `-` e `_`. Reinicie o servidor
-após editar.
+| Pasta/arquivo | O que é |
+|---|---|
+| `channels.json` | seus canais |
+| `fontes.json` | listas públicas, filtros e guias externos |
+| `config.json` | qualidade, placa de vídeo, TMDB, HTTPS… |
+| `usuarios.json` | usuários e senhas (não vai para o git) |
+| `preferencias.json` | favoritos, ocultos e números (o painel grava) |
+| `midia/` | vídeos dos seus canais |
+| `biblioteca/filmes/`, `biblioteca/series/` | filmes e séries sob demanda |
+| `dados/` | arquivos gerados: lista pública, guias, cache de legendas e do TMDB |
 
-### Legendas (filmes e séries)
+Mudanças nesses arquivos (à mão ou pelo painel) valem na hora, sem reiniciar.
 
-A legenda é gravada na imagem, então aparece em qualquer app ou TV.
+## Seus canais (`channels.json`)
 
-- Num `arquivo`: `"legenda": "midia/filme.pt.srt"`
-- Numa `pasta`: `"idiomaLegenda": "ja"` faz `Episódio 01.mkv` usar
-  `Episódio 01.ja.srt` (também aceita `.ass` e `.vtt`). Os episódios tocam em
-  ordem natural (ep2 antes de ep10), e um episódio novo colocado na pasta entra
-  na próxima volta.
-- **Mesma série, duas legendas:** crie dois canais apontando para a mesma pasta,
-  um com `"idiomaLegenda": "ja"` e outro com `"pt"` (já está assim no exemplo).
-- Legenda com acentos quebrados (`Ã§`)? Ela está em Windows-1252: adicione
-  `"codificacaoLegenda": "CP1252"`.
-- Legenda em japonês no Linux precisa de fonte japonesa:
-  `sudo apt install fonts-noto-cjk` (Windows e macOS já têm).
+| `tipo` | `origem` | Uso |
+|---|---|---|
+| `teste` | — | barras coloridas + bipe |
+| `arquivo` | um vídeo (`midia/filme.mp4`) | um vídeo em loop |
+| `pasta` | uma pasta (`midia/minha-serie`) | vários vídeos em ordem (subpastas incluídas) |
+| `url` | `http(s)`, `rtmp`, `rtsp`, `.m3u8` | câmera IP, live, outro stream |
+
+Campos opcionais:
+
+| Campo | Exemplo | O que faz |
+|---|---|---|
+| `grupo`, `logo` | `"Japonês"`, URL | organização na lista |
+| `idiomaLegenda` | `"ja"` | legenda que já começa ligada (as outras ficam no menu) |
+| `legenda` | `"midia/filme.pt.srt"` | legenda de um `arquivo` com nome diferente do vídeo |
+| `legendaGravada` | `"pt"` | grava essa legenda na imagem (para TVs/apps sem suporte a legenda) |
+| `qualidades` | `["1080p", "480p"]` | substitui o `config.json` só neste canal |
+| `bitrate` | `"4000k"` | taxa do vídeo (com uma qualidade só) |
+| `copiar` | `true` | não recodifica (fonte já em H.264/AAC, sem legenda gravada): quase zero CPU |
+| `recursivo` | `false` | numa `pasta`, ignora subpastas |
+| `programacao` | `[{"inicio":"20:00","fim":"22:00","titulo":"…"}]` | guia manual (para `teste` e `url`) |
+| `epgId` | `"Record.br"` | id do canal num guia externo, se for diferente |
+
+### Programação pelo relógio
+
+Canais `arquivo` e `pasta` "passam" sem parar desde 01/01/2026, em ciclo. Ao abrir o canal,
+você cai no ponto exato do que estaria passando agora, e o guia (`/epg.xml`) mostra o que vem
+depois, com os nomes dos arquivos. Colocar ou tirar vídeos da pasta muda a grade a partir dali.
+
+O canal só usa CPU enquanto alguém assiste: desliga 60 s depois que o último espectador sai.
+
+### Legendas
 
 ```
 midia/minha-serie/
-├── Episódio 01.mkv
+├── Episódio 01.mkv          ← legendas embutidas no .mkv também são detectadas
 ├── Episódio 01.ja.srt
-├── Episódio 01.pt.srt
+├── Episódio 01.pt.srt       ← .srt, .ass, .ssa ou .vtt; sem idioma no nome = idiomaLegendaPadrao
 ├── Episódio 02.mkv
 └── ...
 ```
 
-## Canais públicos atualizados todo dia (iptv-org)
+- No player web, escolha em **Legenda**; a escolha vale para todos os canais e filmes.
+- Nos apps (TiviMate, VLC), use o menu de legendas do próprio app.
+- Legenda com acentos quebrados (`Ã§`) é convertida sozinha (Windows-1252 → UTF-8).
+- Legenda em imagem (PGS/DVD, de Blu-ray) não é suportada; use uma .srt.
 
-Além dos seus canais, o servidor baixa sozinho as listas públicas do
-[iptv-org/iptv](https://github.com/iptv-org/iptv) (o projeto por trás do
-[awesome-iptv](https://github.com/iptv-org/awesome-iptv)), **testa cada stream**
-e mantém só os que estão no ar. Isso roda ao iniciar o servidor e de novo a
-cada 24 h, sem precisar fazer nada.
+Para treinar japonês, prefira legenda em japonês, não em português: num estudo, legenda no
+idioma estrangeiro ajudou a entender a fala e legenda na língua materna atrapalhou
+([Mitterer & McQueen, 2009](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0007785)).
 
-- Configuração em `fontes.json`:
+## Qualidade e placa de vídeo (`config.json`)
 
-  | Campo | Padrão | O que faz |
-  |---|---|---|
-  | `listas` | Brasil + português + japonês | URLs `.m3u` a baixar (veja abaixo outras) |
-  | `atualizarACadaHoras` | `24` | intervalo entre atualizações |
-  | `excluirGrupos` | `[]` | ex.: `["Shop", "Religious"]` |
-  | `excluirNaoVinteQuatroHoras` | `false` | remove canais marcados `[Not 24/7]` |
-  | `excluirIpSolto` | `false` | ignora links em IP cru (`http://170.84.x.x/...`): quase sempre são TV paga retransmitida sem autorização, e caem muito |
-  | `excluirHosts` | 4 domínios | outros domínios de retransmissão a ignorar |
-  | `testarStreams` | `true` | testa cada link antes de incluir |
-  | `timeoutTesteMs` / `simultaneos` | `8000` / `20` | rigor e velocidade do teste |
-  | `epgExterno` | `[]` | URLs de guia XMLTV para os canais públicos (o iptv-org não hospeda guia pronto; há fornecedores na aba *Providers → EPG* do awesome-iptv) |
+| Campo | Padrão | Opções |
+|---|---|---|
+| `qualidades` | `["720p"]` | `1080p`, `720p`, `480p`, `360p`; várias = o player troca conforme a internet |
+| `aceleracao` | `cpu` | `nvenc` (NVIDIA), `qsv` (Intel Quick Sync), `vaapi` (Intel/AMD no Linux), `videotoolbox` (Mac) |
+| `dispositivoVaapi` | `/dev/dri/renderD128` | placa usada pelo `vaapi` |
+| `segundosSegmento` / `janelaSegmentos` | `4` / `6` | latência × estabilidade |
+| `ociosoSegundos` | `60` | desliga o canal sem espectadores |
 
-- Outras listas do iptv-org: `https://iptv-org.github.io/iptv/countries/pt.m3u`
-  (Portugal), `.../categories/news.m3u` (notícias), `.../index.m3u` (mundo
-  inteiro, ~10 mil canais — o teste demora).
-- Forçar atualização agora: `node atualizar.js` (ou apague `externos.json` e
-  reinicie o servidor).
-- Se o servidor não fica ligado direto, agende a atualização:
-  - Linux/macOS (`crontab -e`): `0 5 * * * cd /caminho/para/iptv && node atualizar.js`
-  - Windows (PowerShell): `schtasks /Create /SC DAILY /ST 05:00 /TN IPTV /TR "node C:\caminho\iptv\atualizar.js"`
-- Na playlist `.m3u`, os canais públicos apontam **direto para a fonte** (não
-  gastam sua internet nem CPU). No player web eles passam por um proxy do
-  servidor, porque o navegador bloqueia (CORS) a maioria desses links.
-- Se `iptv-org.github.io` estiver bloqueado na sua rede, o atualizador baixa o
-  mesmo arquivo de `raw.githubusercontent.com` automaticamente.
+Cada qualidade a mais custa mais processamento. Com `cpu`, uma qualidade 720p ocupa mais ou
+menos um núcleo; com placa de vídeo, várias qualidades em vários canais ficam leves. Para
+conferir se o seu ffmpeg tem o codificador: `ffmpeg -encoders | grep -E "nvenc|qsv|vaapi|videotoolbox"`.
 
-## Assistir na TV / celular
+## Canais públicos (`fontes.json`)
 
-1. Descubra o IP do computador: `ip a` (Linux), `ipconfig` (Windows) ou
-   `ipconfig getifaddr en0` (macOS).
-2. No app IPTV (TiviMate, IPTV Smarters, VLC → *Mídia → Abrir fluxo de rede*),
-   cole: `http://SEU_IP:8080/playlist.m3u`
-3. EPG (se o app pedir separado): `http://SEU_IP:8080/epg.xml`
+O servidor baixa as listas, testa cada link e guarda **todos** os que responderam para cada
+canal. Entre as atualizações, retesta tudo a cada `verificarACadaMinutos` (`config.json`). Se o
+link em uso cai, passa para o reserva sozinho, inclusive no meio de uma requisição.
 
-## Senha (token)
+| Campo | Padrão | O que faz |
+|---|---|---|
+| `listas` | iptv-org (Brasil, português, japonês) + Free-TV (Brasil, Portugal, Japão) | URLs `.m3u` |
+| `atualizarACadaHoras` | `6` | intervalo entre downloads |
+| `excluirGrupos` | `[]` | ex.: `["Shop", "Religious"]` |
+| `excluirNaoVinteQuatroHoras` | `false` | remove canais `[Not 24/7]` |
+| `excluirIpSolto` | `false` | `true` ignora links em IP cru (quase sempre retransmissão não autorizada) |
+| `excluirHosts` | 4 domínios | domínios a ignorar |
+| `testarStreams`, `timeoutTesteMs`, `simultaneos` | `true`, `8000`, `20` | teste dos links |
+| `epgExterno` | `[]` | guias XMLTV (`.xml` ou `.xml.gz`) |
 
-```bash
-IPTV_TOKEN=minhasenha123 node server.js
+- Mais listas = mais links reserva. O mesmo canal em listas diferentes (mesmo `tvg-id`), ou em
+  qualidades diferentes (`@SD`/`@HD`), vira reserva automaticamente.
+- Links do YouTube são ignorados (players de IPTV não tocam).
+- Se `iptv-org.github.io` estiver bloqueado na sua rede, o mesmo arquivo é baixado de `raw.githubusercontent.com`.
+- Forçar agora: painel → **Atualizar lista pública agora**, ou `node atualizar.js`.
+
+Na playlist, os canais públicos apontam para `/canal/<id>.m3u8` no seu servidor, que redireciona
+para o link no ar (a imagem não passa pela sua máquina). Fontes que exigem User-Agent/Referer,
+e o player web, passam pelo proxy do servidor. `"linksDiretos": true` no `config.json` põe o
+link original na playlist, mas aí não há troca automática.
+
+## Guia de programação
+
+`/epg.xml` junta tudo, já com os ids dos seus canais:
+
+1. a grade dos canais `arquivo`/`pasta` (automática) e a `programacao` manual;
+2. os guias de `epgExterno` (filtrados para os seus canais; o casamento é pelo `tvg-id` das listas, ou pelo `epgId`);
+3. opcional: o **coletor oficial do iptv-org** ([iptv-org/epg](https://github.com/iptv-org/epg)),
+   que monta o guia só dos seus canais a partir dos sites mapeados pelo projeto:
+
+   ```json
+   "epgIptvOrg": { "ativo": true, "dias": 2, "conexoes": 5 }
+   ```
+
+   Precisa de `git` e `npm`. Na primeira vez baixa o projeto em `dados/epg-grabber` (~430 MB)
+   e a coleta pode levar vários minutos; roda a cada atualização da lista.
+
+## Filmes e séries
+
+```
+biblioteca/
+├── filmes/
+│   ├── Meu Filme (2019).mkv
+│   ├── Meu Filme (2019).pt.srt
+│   └── Anime/                       ← subpasta = categoria
+│       └── Outro.Filme.2005.1080p.mp4
+└── series/
+    └── Nome da Série/
+        ├── S01E01.mkv               ← S01E01, 1x01, "Temporada 1/Episódio 01" ou só o número
+        ├── S01E01.ja.srt
+        └── ...
 ```
 
-Aí todo acesso precisa de `?token=minhasenha123`, inclusive a playlist e o
-player (`http://SEU_IP:8080/?token=minhasenha123`). A playlist gerada já
-inclui o token nos links.
+- Aparecem nas abas **Filmes** e **Séries** do player web (com "continuar de onde parou") e nos apps Xtream.
+- Capas, sinopses e notas: crie uma chave grátis em [themoviedb.org](https://www.themoviedb.org/settings/api)
+  e cole em `"tmdbApiKey"` no `config.json`.
+- O navegador toca bem `.mp4` (H.264); `.mkv` com HEVC ou `.avi` tocam pelo VLC ou pelos apps de TV.
+- A biblioteca é relida a cada 10 min (ou painel → **Reler biblioteca**).
 
-## Acessar fora de casa
+## Assistir na TV e no celular
 
-Mais simples e seguro: [Tailscale](https://tailscale.com/download) no
-servidor e no celular — use o IP `100.x.x.x` do Tailscale no lugar do IP local.
-Evite abrir a porta no roteador sem token + HTTPS.
+Descubra o IP do computador: `ip a` (Linux), `ipconfig` (Windows) ou `ipconfig getifaddr en0` (macOS).
 
-## Próximos passos possíveis
+**Apps com Xtream Codes (recomendado, mostra filmes e séries):** TiviMate, IPTV Smarters, XCIPTV
+1. Adicionar playlist → **Xtream Codes**
+2. Servidor: `http://SEU_IP:8080`
+3. Usuário e senha: os de `usuarios.json`
+4. No TiviMate, em formato de stream, escolha **HLS (m3u8)**
 
-- Várias qualidades (ABR: 1080p/720p/480p) com `-var_stream_map`
-- Grade de programação real (vários arquivos por horário, em vez de 1 em loop)
-- Gravação (DVR) e catch-up
-- HTTPS com Caddy na frente: `caddy reverse-proxy --from tv.seudominio.com --to :8080`
+**Apps com M3U:** VLC (**Mídia → Abrir fluxo de rede**), Kodi (PVR IPTV Simple Client)
+- Playlist: `http://SEU_IP:8080/playlist.m3u?token=SUA_SENHA`
+- Guia (se o app pedir separado): `http://SEU_IP:8080/epg.xml?token=SUA_SENHA`
+
+## Usuários e segurança
+
+- Cada pessoa ou aparelho com a sua senha (mínimo de 8 caracteres). A senha também é o token dos links.
+- **Desativar** um usuário no painel corta o acesso na hora, sem mudar a senha dos outros.
+- 10 senhas erradas em 10 min bloqueiam aquele IP por 15 min.
+- `IPTV_TOKEN=senha node server.js` cria um administrador temporário (útil no primeiro acesso).
+
+**HTTPS:** `config.json` → `"https": { "cert": "cert.pem", "key": "key.pem" }`, ou as variáveis
+`IPTV_CERT`/`IPTV_KEY`. Para domínio próprio, o mais simples é o Caddy na frente (certificado automático):
+
+```bash
+caddy reverse-proxy --from tv.seudominio.com.br --to :8080
+```
+
+**Fora de casa:** [Tailscale](https://tailscale.com/download) no servidor e no celular, usando
+o IP `100.x.x.x`, sem abrir porta no roteador. Se for abrir porta, só com usuários criados + HTTPS.
+
+## Docker (para deixar ligado 24 h)
+
+Bom para um mini PC ou Raspberry Pi 4/5 sempre ligado:
+
+```bash
+cd iptv
+docker compose up -d --build
+docker compose logs -f
+```
+
+- Seus arquivos ficam em `./dados-docker` (`channels.json`, `usuarios.json`…). Na primeira
+  execução, os exemplos são copiados para lá.
+- Monte suas pastas de vídeo e biblioteca descomentando as linhas `volumes` do `docker-compose.yml`.
+- Placa de vídeo Intel/AMD: descomente `devices: /dev/dri` e use `"aceleracao": "vaapi"`.
+- O Docker vigia `/saude` e reinicia o container se travar (`restart: unless-stopped`).
+
+Sem Docker, no Linux, um serviço do systemd faz o mesmo:
+
+```ini
+# /etc/systemd/system/iptv.service
+[Unit]
+Description=IPTV caseiro
+After=network-online.target
+
+[Service]
+WorkingDirectory=/caminho/para/iptv
+ExecStart=/usr/bin/node server.js
+Restart=always
+User=SEU_USUARIO
+
+[Install]
+WantedBy=multi-user.target
+```
+
+```bash
+sudo systemctl enable --now iptv
+```
+
+## Testes
+
+```bash
+cd iptv
+npm test
+```
+
+São testes de unidade e de integração. Os de integração sobem o servidor de verdade com vídeos
+gerados pelo ffmpeg, uma fonte externa falsa (link morto + reserva), biblioteca e usuários. Eles
+rodam sozinhos no GitHub Actions (`.github/workflows/iptv.yml`) a cada mudança na pasta `iptv/`.
+
+## Estrutura do código
+
+| Arquivo | Responsabilidade |
+|---|---|
+| `server.js` | rotas HTTP, senhas, tarefas periódicas |
+| `lib/transmissao.js` | canais ao vivo: ffmpeg por vídeo, playlists HLS montadas pelo servidor |
+| `lib/agenda.js` | programação pelo relógio |
+| `lib/legendas.js` | descoberta, conversão para WebVTT e pedaços de legenda |
+| `lib/codificador.js` | qualidades e codificação por hardware |
+| `lib/atualizar.js` | download, teste e agrupamento das listas públicas |
+| `lib/externos.js` | verificação contínua, troca de link e proxy assinado |
+| `lib/epg.js` | guia XMLTV e coletor do iptv-org |
+| `lib/biblioteca.js` | filmes, séries e TMDB |
+| `lib/xtream.js` | API Xtream Codes |
+| `lib/auth.js` | usuários e limite de tentativas |
+| `lib/canais.js` | lista única de canais com favoritos e numeração |
+| `lib/config.js`, `lib/midia.js` | arquivos de configuração; ffprobe com cache |

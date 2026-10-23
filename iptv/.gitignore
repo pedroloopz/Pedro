@@ -1,5 +1,10 @@
 hls/
+dados/
+dados-docker/
 midia/*
 !midia/.gitkeep
-externos.json
-externos.json.tmp
+biblioteca/*
+!biblioteca/.gitkeep
+usuarios.json
+preferencias.json
+*.tmp

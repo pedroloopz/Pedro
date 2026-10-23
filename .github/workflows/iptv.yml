@@ -1,0 +1,24 @@
+name: IPTV - testes
+
+on:
+  push:
+    paths: ['iptv/**', '.github/workflows/iptv.yml']
+  pull_request:
+    paths: ['iptv/**', '.github/workflows/iptv.yml']
+
+jobs:
+  testes:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: iptv
+    strategy:
+      matrix:
+        node: [22, 24]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - run: npm test
