@@ -7,7 +7,7 @@
   ],
   "excluirGrupos": [],
   "excluirNaoVinteQuatroHoras": false,
-  "excluirIpSolto": true,
+  "excluirIpSolto": false,
   "excluirHosts": ["mov3.co", "freem3u.xyz", "thinkkast.dpdns.org", "satlabscloud.com.br"],
   "testarStreams": true,
   "timeoutTesteMs": 8000,

@@ -113,7 +113,7 @@ cada 24 h, sem precisar fazer nada.
   | `atualizarACadaHoras` | `24` | intervalo entre atualizações |
   | `excluirGrupos` | `[]` | ex.: `["Shop", "Religious"]` |
   | `excluirNaoVinteQuatroHoras` | `false` | remove canais marcados `[Not 24/7]` |
-  | `excluirIpSolto` | `true` | ignora links em IP cru (`http://170.84.x.x/...`): quase sempre são TV paga retransmitida sem autorização, e caem muito |
+  | `excluirIpSolto` | `false` | ignora links em IP cru (`http://170.84.x.x/...`): quase sempre são TV paga retransmitida sem autorização, e caem muito |
   | `excluirHosts` | 4 domínios | outros domínios de retransmissão a ignorar |
   | `testarStreams` | `true` | testa cada link antes de incluir |
   | `timeoutTesteMs` / `simultaneos` | `8000` / `20` | rigor e velocidade do teste |
