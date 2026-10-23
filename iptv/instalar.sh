@@ -112,7 +112,9 @@ EOF
 else
   passo "Sem systemd: ligando em segundo plano (não volta sozinho se o aparelho reiniciar)"
   pkill -f "node server.js" 2>/dev/null || true
-  (cd "$APP" && IPTV_RAIZ="$DADOS" PORT="$PORTA" HF_HOME="$DADOS/modelos" nohup node server.js > "$DADOS/iptv.log" 2>&1 &)
+  cd "$APP"
+  IPTV_RAIZ="$DADOS" PORT="$PORTA" HF_HOME="$DADOS/modelos" nohup node server.js > "$DADOS/iptv.log" 2>&1 < /dev/null &
+  cd - >/dev/null
 fi
 
 passo "Conferindo se subiu"
